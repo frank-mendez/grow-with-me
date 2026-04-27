@@ -2,6 +2,9 @@
 
 import { useEffect, useRef } from 'react'
 
+// cosmetic-only randomness — not used for security, cryptography, or anything sensitive
+const rand = () => Math.random() // NOSONAR
+
 /* ── Botanical SVG decorations ──────────────────────────── */
 function BottomLeftBotanical() {
   return (
@@ -54,15 +57,15 @@ function ParticleField() {
 
     for (let i = 0; i < 18; i++) {
       const p = document.createElement('div')
-      const size = Math.random() * 3 + 1
+      const size = rand() * 3 + 1
       p.className = 'particle'
       p.style.cssText = `
         width: ${size}px;
         height: ${size}px;
-        left: ${Math.random() * 100}%;
-        bottom: ${Math.random() * 20}%;
-        animation-delay: ${Math.random() * 10}s;
-        animation-duration: ${Math.random() * 12 + 8}s;
+        left: ${rand() * 100}%;
+        bottom: ${rand() * 20}%;
+        animation-delay: ${rand() * 10}s;
+        animation-duration: ${rand() * 12 + 8}s;
         opacity: 0;
       `
       container.appendChild(p)
