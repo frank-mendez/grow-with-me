@@ -1,13 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import HomePage from '@/app/page'
-
-// useEffect particle creation requires a real DOM — jsdom provides it,
-// but requestAnimationFrame is not implemented there.
-vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-  cb(0)
-  return 0
-})
 
 describe('HomePage', () => {
   it('renders the main landmark', () => {

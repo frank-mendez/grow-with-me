@@ -1,4 +1,4 @@
--- pregnancy_weeks: static reference table (no RLS needed — read-only public data)
+-- pregnancy_weeks: static reference table — read-only public data
 create table pregnancy_weeks (
   id          uuid primary key default gen_random_uuid(),
   week_number int  unique not null,
@@ -6,13 +6,19 @@ create table pregnancy_weeks (
   description text
 );
 
+alter table pregnancy_weeks enable row level security;
+
+create policy "Anyone can read pregnancy weeks"
+  on pregnancy_weeks for select
+  using (true);
+
 -- voice_entries
 create table voice_entries (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid references auth.users(id) on delete cascade not null,
   week_id    uuid references pregnancy_weeks(id) on delete cascade not null,
   audio_url  text not null,
-  created_at timestamptz default now()
+  created_at timestamptz default now() not null
 );
 
 -- kick_logs
@@ -20,7 +26,7 @@ create table kick_logs (
   id      uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
   date    date not null,
-  count   int  default 0
+  count   int  default 0 not null check (count >= 0)
 );
 
 -- mood_entries
