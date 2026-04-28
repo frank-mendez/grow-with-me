@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Footer from '@/components/Footer'
 
 // cosmetic-only randomness — not used for security, cryptography, or anything sensitive
 const rand = () => Math.random() // NOSONAR
@@ -110,6 +111,7 @@ function FeatureCard({ icon, title, description, delay }: FeatureCardProps) {
 /* ── Main page ──────────────────────────────────────────── */
 export default function HomePage() {
   return (
+    <>
     <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
 
       {/* Deep forest gradient background */}
@@ -276,5 +278,7 @@ export default function HomePage() {
         style={{ background: 'linear-gradient(to top, #0b1a14 0%, transparent 100%)' }}
       />
     </main>
+    <Footer />
+    </>
   )
 }

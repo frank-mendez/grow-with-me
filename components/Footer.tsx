@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 
 // Brahms' Lullaby — Wiegenlied Op.49 No.4
-// Source: orangefreesounds.com · CC Attribution 4.0 · Streamed directly, not stored
-const STREAM_URL =
-  'https://www.orangefreesounds.com/wp-content/uploads/2016/02/Brahms-lullaby.mp3'
+// Source: orangefreesounds.com · CC Attribution 4.0 · Self-hosted at /audio/brahms-lullaby.mp3
+const STREAM_URL = '/audio/brahms-lullaby.mp3'
 const TRACK_NAME = "Brahms' Lullaby"
-const TRACK_CREDIT = 'Wiegenlied · CC BY 4.0 · orangefreesounds.com'
+const TRACK_CREDIT = "Wiegenlied · CC BY 4.0 · orangefreesounds.com"
 
 const BAR_HEIGHTS = [0.45, 1, 0.65, 1, 0.5] as const
 

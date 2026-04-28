@@ -49,9 +49,9 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('display_name, due_date')
     .eq('id', user.id)
-    .single<Profile>()
+    .single<Pick<Profile, 'display_name' | 'due_date'>>()
 
   const currentWeek = getCurrentWeek(profile?.due_date ?? null)
 

@@ -20,6 +20,7 @@ describe('TimelinePage', () => {
         { id: '1', week_number: 1, title: 'The Beginning', description: 'Everything starts here' },
         { id: '2', week_number: 2, title: 'Week Two', description: null },
       ],
+      error: null,
     })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
@@ -32,7 +33,7 @@ describe('TimelinePage', () => {
   })
 
   it('renders an empty list when data is null', async () => {
-    mockOrder.mockResolvedValue({ data: null })
+    mockOrder.mockResolvedValue({ data: null, error: null })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     const jsx = await TimelinePage()
@@ -43,12 +44,20 @@ describe('TimelinePage', () => {
   })
 
   it('renders the "Timeline" heading', async () => {
-    mockOrder.mockResolvedValue({ data: [] })
+    mockOrder.mockResolvedValue({ data: [], error: null })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     const jsx = await TimelinePage()
     render(jsx)
 
     expect(screen.getByText('Timeline')).toBeInTheDocument()
+  })
+
+  it('throws when the Supabase query returns an error', async () => {
+    const dbError = new Error('Connection refused')
+    mockOrder.mockResolvedValue({ data: null, error: dbError })
+
+    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
+    await expect(TimelinePage()).rejects.toThrow('Connection refused')
   })
 })

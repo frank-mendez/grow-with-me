@@ -6,10 +6,12 @@ import type { PregnancyWeek } from '@/types/database'
 export default async function TimelinePage() {
   const supabase = await createClient()
 
-  const { data: weeks } = await supabase
+  const { data: weeks, error } = await supabase
     .from('pregnancy_weeks')
     .select('id, week_number, title, description')
     .order('week_number')
+
+  if (error) throw error
 
   return (
     <Container className="pt-6">
