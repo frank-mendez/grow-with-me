@@ -25,10 +25,10 @@ describe('HomePage', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders the primary CTA button', () => {
+  it('renders the primary CTA link', () => {
     render(<HomePage />)
     expect(
-      screen.getByRole('button', { name: /Begin Your Journey/i })
+      screen.getByRole('link', { name: /Begin Your Journey/i })
     ).toBeInTheDocument()
   })
 
