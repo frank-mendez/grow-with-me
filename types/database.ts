@@ -28,3 +28,11 @@ export interface MoodEntry {
   date: string
   mood: Mood
 }
+
+export interface Profile {
+  id: string
+  display_name: string | null
+  due_date: string | null
+  created_at: string
+  updated_at: string
+}
