@@ -73,6 +73,12 @@ describe('getCurrentWeek', () => {
     expect(getCurrentWeek('2025-13-01')).toBeNull()
     expect(getCurrentWeek('2025-02-30')).toBeNull()
   })
+
+  it('returns 40 on the due date itself (not null)', () => {
+    const today = new Date()
+    const dueDate = today.toISOString().slice(0, 10)
+    expect(getCurrentWeek(dueDate)).toBe(40)
+  })
 })
 
 // ── DashboardPage ─────────────────────────────────────────────────────────────

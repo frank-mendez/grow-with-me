@@ -26,7 +26,8 @@ export function getCurrentWeek(dueDate: string | null): number | null {
     parsed.getUTCDate() !== d
   ) return null
 
-  const startUtc = dueUtc - 280 * 86_400_000
+  // Include the due date itself as the final day of week 40
+  const startUtc = dueUtc - 279 * 86_400_000
   const daysElapsed = Math.floor((todayUtc - startUtc) / 86_400_000)
   if (!Number.isFinite(daysElapsed) || daysElapsed < 0 || daysElapsed >= 280) return null
   return Math.floor(daysElapsed / 7) + 1
