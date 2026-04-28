@@ -89,3 +89,21 @@ body {
   from { transform: scaleY(0.25); }
   to   { transform: scaleY(1); }
 }
+
+/* ── Hide scrollbar cross-browser ───────────────────────── */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Baby visual ambient particle ───────────────────────── */
+@keyframes baby-particle {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  15%  { opacity: 0.85; }
+  85%  { opacity: 0.25; }
+  100% { transform: translate(-50%, calc(-50% - 22px)) scale(0.35); opacity: 0; }
+}
+.baby-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: baby-particle ease-in-out infinite;
+}

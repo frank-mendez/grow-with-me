@@ -1,60 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
-import { Container } from '@/components/ui/container'
-import { Header } from '@/components/ui/header'
-import type { PregnancyWeek } from '@/types/database'
+import type { PregnancyWeek, Profile } from '@/types/database'
+import { getCurrentWeek } from '@/lib/pregnancy'
+import { TimelineView } from '@/components/timeline/TimelineView'
 
 export default async function TimelinePage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: weeks, error } = await supabase
-    .from('pregnancy_weeks')
-    .select('id, week_number, title, description')
-    .order('week_number')
+  const [weeksResult, profileResult] = await Promise.all([
+    supabase
+      .from('pregnancy_weeks')
+      .select('id, week_number, title, description')
+      .order('week_number'),
+    user
+      ? supabase
+          .from('profiles')
+          .select('due_date')
+          .eq('id', user.id)
+          .single<Pick<Profile, 'due_date'>>()
+      : Promise.resolve({ data: null, error: null }),
+  ])
 
-  if (error) throw error
+  if (weeksResult.error) throw weeksResult.error
+
+  const weeks = (weeksResult.data ?? []) as PregnancyWeek[]
+  const currentWeek = getCurrentWeek(profileResult.data?.due_date ?? null)
+  const initialWeek = currentWeek ?? 1
 
   return (
-    <Container className="pt-6">
-      <div className="fade-up">
-        <Header eyebrow="Your journey" title="Timeline" />
-      </div>
-
-      <ol className="space-y-2 fade-up">
-        {((weeks ?? []) as PregnancyWeek[]).map((week) => (
-          <li
-            key={week.id}
-            className="flex items-center gap-4 px-5 py-4 rounded-xl"
-            style={{
-              background: 'var(--forest-mid)',
-              border: '1px solid rgba(201,160,50,0.1)',
-            }}
-          >
-            <span
-              className="text-2xl font-light w-10 shrink-0 text-center tabular-nums"
-              style={{ fontFamily: 'var(--font-cormorant)', color: 'var(--gold)' }}
-              aria-label={`Week ${week.week_number}`}
-            >
-              {week.week_number}
-            </span>
-            <div className="min-w-0">
-              <p
-                className="text-sm font-medium truncate"
-                style={{ color: 'var(--cream)' }}
-              >
-                {week.title ?? `Week ${week.week_number}`}
-              </p>
-              {week.description && (
-                <p
-                  className="text-xs mt-0.5 truncate"
-                  style={{ color: 'var(--cream-dim)' }}
-                >
-                  {week.description}
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
-    </Container>
+    <TimelineView
+      weeks={weeks}
+      initialWeek={initialWeek}
+      currentWeek={currentWeek}
+    />
   )
 }
