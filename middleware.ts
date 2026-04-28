@@ -16,13 +16,13 @@ export async function middleware(request: NextRequest) {
 
   if (PROTECTED_PATHS.some((p) => pathname.startsWith(p)) && !user) {
     const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
-    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value))
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c))
     return redirectResponse
   }
 
   if (AUTH_PATHS.some((p) => pathname.startsWith(p)) && user) {
     const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url))
-    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value))
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c))
     return redirectResponse
   }
 

@@ -36,10 +36,10 @@ $$;
 
 create trigger set_profiles_updated_at
   before update on public.profiles
-  for each row execute procedure public.handle_profiles_updated_at();
+  for each row execute function public.handle_profiles_updated_at();
 
 -- Auto-create a bare profile row whenever a new user signs up
-create or replace function public.handle_new_user()
+create or replace function public.handle_auth_user_created()
 returns trigger
 language plpgsql
 security definer set search_path = public
@@ -53,4 +53,4 @@ $$;
 
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+  for each row execute function public.handle_auth_user_created();

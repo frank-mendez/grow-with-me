@@ -61,6 +61,18 @@ describe('getCurrentWeek', () => {
     dueDate.setDate(dueDate.getDate() + 279)
     expect(getCurrentWeek(dueDate.toISOString().slice(0, 10))).toBe(1)
   })
+
+  it('returns null for a malformed date string (not YYYY-MM-DD)', () => {
+    expect(getCurrentWeek('not-a-date')).toBeNull()
+    expect(getCurrentWeek('2025/06/01')).toBeNull()
+    expect(getCurrentWeek('20250601')).toBeNull()
+  })
+
+  it('returns null for an impossible calendar date that JS would silently roll over', () => {
+    // Month 13 or day 32 don't exist; JS Date would roll them over, so we reject
+    expect(getCurrentWeek('2025-13-01')).toBeNull()
+    expect(getCurrentWeek('2025-02-30')).toBeNull()
+  })
 })
 
 // ── DashboardPage ─────────────────────────────────────────────────────────────

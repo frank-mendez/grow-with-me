@@ -7,13 +7,28 @@ import type { Profile } from '@/types/database'
 
 export function getCurrentWeek(dueDate: string | null): number | null {
   if (!dueDate) return null
+
+  const parts = dueDate.split('-')
+  if (parts.length !== 3) return null
+
+  const [y, m, d] = parts.map(Number)
+  if (![y, m, d].every((v) => Number.isInteger(v) && Number.isFinite(v))) return null
+
   const now = new Date()
   const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  const [y, m, d] = dueDate.split('-').map(Number)
   const dueUtc = Date.UTC(y, m - 1, d)
+
+  // Guard against out-of-range dates that JavaScript silently rolls over
+  const parsed = new Date(dueUtc)
+  if (
+    parsed.getUTCFullYear() !== y ||
+    parsed.getUTCMonth() !== m - 1 ||
+    parsed.getUTCDate() !== d
+  ) return null
+
   const startUtc = dueUtc - 280 * 86_400_000
   const daysElapsed = Math.floor((todayUtc - startUtc) / 86_400_000)
-  if (daysElapsed < 0 || daysElapsed >= 280) return null
+  if (!Number.isFinite(daysElapsed) || daysElapsed < 0 || daysElapsed >= 280) return null
   return Math.floor(daysElapsed / 7) + 1
 }
 

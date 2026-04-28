@@ -117,7 +117,7 @@ export default function Footer() {
                 backgroundClip: 'text',
               }}
             >
-              Rhoie Jhannarie Mendez
+              {process.env.NEXT_PUBLIC_DEDICATION_NAME ?? 'Rhoie Jhannarie Mendez'}
             </span>
             {' '}— a first-time mom whose strength, love, and journey
             inspired every line of this app.
@@ -241,7 +241,7 @@ export default function Footer() {
         ref={audioRef}
         src={STREAM_URL}
         loop
-        preload="metadata"
+        preload="none"
         onError={() => { setLoadError(true); setPlaying(false) }}
         onEnded={() => setPlaying(false)}
       />
