@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/container'
 import { Header } from '@/components/ui/header'
 import type { Profile } from '@/types/database'
 
-function getCurrentWeek(dueDate: string | null): number | null {
+export function getCurrentWeek(dueDate: string | null): number | null {
   if (!dueDate) return null
   const now = new Date()
   const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
@@ -27,14 +27,14 @@ const FEATURES = [
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // getSession reads the already-validated cookie — no extra network round-trip
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/login')
+  // Always use getUser() — getSession() is unsafe for server-side auth checks
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single<Profile>()
 
   const currentWeek = getCurrentWeek(profile?.due_date ?? null)

@@ -15,11 +15,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PROTECTED_PATHS.some((p) => pathname.startsWith(p)) && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value))
+    return redirectResponse
   }
 
   if (AUTH_PATHS.some((p) => pathname.startsWith(p)) && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url))
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value))
+    return redirectResponse
   }
 
   return response

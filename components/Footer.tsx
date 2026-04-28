@@ -236,7 +236,7 @@ export default function Footer() {
         </p>
       </div>
 
-      {/* Audio element — streams from Wikimedia Commons, no local storage */}
+      {/* Audio element — streams from orangefreesounds.com, no local storage */}
       <audio
         ref={audioRef}
         src={STREAM_URL}
@@ -244,10 +244,7 @@ export default function Footer() {
         preload="metadata"
         onError={() => { setLoadError(true); setPlaying(false) }}
         onEnded={() => setPlaying(false)}
-      >
-        {/* Instrumental ambient music — no speech/lyrics, captions not applicable */}
-        <track kind="captions" srcLang="en" label="No captions" default />
-      </audio>
+      />
     </footer>
   )
 }

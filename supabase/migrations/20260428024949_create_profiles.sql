@@ -23,6 +23,21 @@ create policy "Users can update their own profile"
 
 grant select, insert, update on public.profiles to authenticated;
 
+-- Automatically update updated_at on every row update
+create or replace function public.handle_profiles_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger set_profiles_updated_at
+  before update on public.profiles
+  for each row execute procedure public.handle_profiles_updated_at();
+
 -- Auto-create a bare profile row whenever a new user signs up
 create or replace function public.handle_new_user()
 returns trigger
