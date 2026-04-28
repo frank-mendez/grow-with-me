@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Link from 'next/link'
+import Footer from '@/components/Footer'
 
 // cosmetic-only randomness — not used for security, cryptography, or anything sensitive
 const rand = () => Math.random() // NOSONAR
@@ -109,6 +111,7 @@ function FeatureCard({ icon, title, description, delay }: FeatureCardProps) {
 /* ── Main page ──────────────────────────────────────────── */
 export default function HomePage() {
   return (
+    <>
     <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
 
       {/* Deep forest gradient background */}
@@ -215,12 +218,13 @@ export default function HomePage() {
 
         {/* CTA buttons */}
         <div className="fade-up mt-10 flex flex-col sm:flex-row gap-4" style={{ animationDelay: '0.6s' }}>
-          <button
+          <Link
+            href="/login"
             className="btn-shimmer rounded-full px-8 py-3.5 text-[#0b1a14] font-medium text-sm tracking-wide shadow-lg hover:scale-105 active:scale-95 transition-transform duration-200"
             style={{ fontFamily: 'var(--font-dm-sans)' }}
           >
             Begin Your Journey
-          </button>
+          </Link>
           <button
             className="rounded-full px-8 py-3.5 border border-[#c9a032]/30 text-[#c8bfad] font-light text-sm tracking-wide hover:border-[#c9a032]/60 hover:text-[#f5f0e8] transition-all duration-300"
             style={{ fontFamily: 'var(--font-dm-sans)' }}
@@ -274,5 +278,7 @@ export default function HomePage() {
         style={{ background: 'linear-gradient(to top, #0b1a14 0%, transparent 100%)' }}
       />
     </main>
+    <Footer />
+    </>
   )
 }
