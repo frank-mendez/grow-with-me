@@ -61,3 +61,10 @@ create policy "Users can manage their own mood entries"
   on mood_entries for all
   using  (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- Table-level grants required for PostgREST (RLS alone is not sufficient)
+grant usage on schema public to anon, authenticated;
+grant select on pregnancy_weeks to anon, authenticated;
+grant select, insert, update, delete on voice_entries to authenticated;
+grant select, insert, update, delete on kick_logs to authenticated;
+grant select, insert, update, delete on mood_entries to authenticated;
