@@ -17,7 +17,7 @@ const week = {
   week_number: 5,
   title: 'The Heart Beats',
   description: 'Heart starts beating',
-  baby_size: null,
+  baby_size: 'Kidney Bean',
   trimester: null,
   approx_size: null,
   just_for_you: null,
@@ -31,8 +31,10 @@ describe('WeekCard', () => {
 
   it('renders the fruit emoji for the week', () => {
     render(<WeekCard week={week} isSelected={false} isCurrent={false} onClick={vi.fn()} />)
-    // Week 5 maps to 🫘
-    expect(screen.getByRole('img', { hidden: true })).toBeInTheDocument()
+    // baby_size 'Kidney Bean' maps to 🫘
+    const emoji = screen.getByRole('img', { hidden: true })
+    expect(emoji).toBeInTheDocument()
+    expect(emoji).toHaveTextContent('🫘')
   })
 
   it('calls onClick when clicked', () => {

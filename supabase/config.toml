@@ -228,8 +228,10 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
+# NOTE: Keep enabled = false for local development — Inbucket (above) handles email testing locally.
+# Set enabled = true only in production / CI where RESEND_API_KEY is available.
 [auth.email.smtp]
-enabled = true
+enabled = false
 host = "smtp.resend.com"
 port = 465
 user = "resend"
