@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import type { PregnancyWeek } from '@/types/database'
 import { Container } from '@/components/ui/container'
-import { Header } from '@/components/ui/header'
 import { WeekCardStrip } from './WeekCardStrip'
 import { WeekDetailPanel } from './WeekDetailPanel'
 
@@ -20,7 +19,7 @@ export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<Timel
 
   return (
     <div className="fade-up" style={{ position: 'relative' }}>
-      {/* Page-level warm atmosphere — visible behind both strip and detail */}
+      {/* Page-level warm atmosphere */}
       <div
         aria-hidden="true"
         style={{
@@ -34,11 +33,33 @@ export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<Timel
           zIndex: 0,
         }}
       />
-      <Container className="pt-6" style={{ position: 'relative', zIndex: 1 }}>
-        <Header eyebrow="Your journey" title="Timeline" />
+
+      {/* Header section */}
+      <Container className="pt-6 pb-2" style={{ position: 'relative', zIndex: 1 }}>
+        <p
+          className="text-xs tracking-widest uppercase mb-1"
+          style={{ color: 'var(--gold)' }}
+        >
+          Your journey
+        </p>
+        <h1
+          className="font-light mb-1"
+          style={{
+            fontFamily: 'var(--font-cormorant)',
+            color: 'var(--cream)',
+            fontSize: 'clamp(2rem, 6vw, 2.75rem)',
+            lineHeight: 1.1,
+          }}
+        >
+          Timeline
+        </h1>
+        <p style={{ fontSize: '13px', color: 'var(--cream-dim)', opacity: 0.75, letterSpacing: '0.01em' }}>
+          Every week, a new miracle.
+        </p>
       </Container>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      {/* Week card strip */}
+      <div style={{ position: 'relative', zIndex: 1, marginTop: 16 }}>
         <WeekCardStrip
           weeks={weeks}
           selectedWeek={selectedWeek}
@@ -48,7 +69,16 @@ export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<Timel
         />
       </div>
 
-      <Container style={{ position: 'relative', zIndex: 1 }}>
+      {/* Detail panel — wider than Container to allow two-column layout */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: 900,
+          margin: '0 auto',
+          padding: '0 16px',
+        }}
+      >
         <AnimatePresence mode="wait">
           {selected && (
             <WeekDetailPanel
@@ -58,7 +88,7 @@ export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<Timel
             />
           )}
         </AnimatePresence>
-      </Container>
+      </div>
     </div>
   )
 }

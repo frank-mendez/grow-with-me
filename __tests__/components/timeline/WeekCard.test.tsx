@@ -17,6 +17,10 @@ const week = {
   week_number: 5,
   title: 'The Heart Beats',
   description: 'Heart starts beating',
+  baby_size: null,
+  trimester: null,
+  approx_size: null,
+  just_for_you: null,
 }
 
 describe('WeekCard', () => {

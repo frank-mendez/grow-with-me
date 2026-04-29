@@ -10,7 +10,7 @@ export default async function TimelinePage() {
   const [weeksResult, profileResult] = await Promise.all([
     supabase
       .from('pregnancy_weeks')
-      .select('id, week_number, title, description')
+      .select('id, week_number, title, description, baby_size, trimester, approx_size, just_for_you')
       .order('week_number'),
     user
       ? supabase

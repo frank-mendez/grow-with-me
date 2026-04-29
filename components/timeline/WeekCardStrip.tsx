@@ -84,7 +84,7 @@ export function WeekCardStrip({
           <div
             key={week.id}
             data-week={week.week_number}
-            style={{ scrollSnapAlign: 'center', flexShrink: 0, width: 88, height: 120 }}
+            style={{ scrollSnapAlign: 'center', flexShrink: 0, width: 88, height: 140 }}
           >
             <WeekCard
               week={week}
