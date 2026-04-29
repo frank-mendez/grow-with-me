@@ -25,7 +25,7 @@ export function WeekCardStrip({
     const container = containerRef.current
     if (!container) return
     const card = container.querySelector<HTMLElement>(`[data-week="${selectedWeek}"]`)
-    const behavior = selectedWeek === initialWeek ? 'instant' : 'smooth'
+    const behavior = selectedWeek === initialWeek ? 'auto' : 'smooth'
     card?.scrollIntoView?.({ behavior, inline: 'center', block: 'nearest' })
   }, [selectedWeek, initialWeek])
 
@@ -47,7 +47,6 @@ export function WeekCardStrip({
     justifyContent: 'center',
     fontSize: 18,
     zIndex: 2,
-    cursor: 'pointer',
   }
 
   return (
@@ -57,11 +56,14 @@ export function WeekCardStrip({
         onClick={() => canGoPrev && onSelect(weeks[currentIndex - 1].week_number)}
         whileTap={{ scale: 0.86 }}
         aria-label="Previous week"
+        disabled={!canGoPrev}
+        aria-disabled={!canGoPrev}
         style={{
           ...navBase,
           left: 10,
           opacity: canGoPrev ? 1 : 0.22,
           color: canGoPrev ? 'var(--cream)' : 'var(--cream-dim)',
+          cursor: canGoPrev ? 'pointer' : 'default',
         }}
       >
         ‹
@@ -99,11 +101,14 @@ export function WeekCardStrip({
         onClick={() => canGoNext && onSelect(weeks[currentIndex + 1].week_number)}
         whileTap={{ scale: 0.86 }}
         aria-label="Next week"
+        disabled={!canGoNext}
+        aria-disabled={!canGoNext}
         style={{
           ...navBase,
           right: 10,
           opacity: canGoNext ? 1 : 0.22,
           color: canGoNext ? 'var(--cream)' : 'var(--cream-dim)',
+          cursor: canGoNext ? 'pointer' : 'default',
         }}
       >
         ›

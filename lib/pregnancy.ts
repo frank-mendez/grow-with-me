@@ -27,5 +27,5 @@ export function getCurrentWeek(dueDate: string | null): number | null {
 
 // Maps week number to a visual scale (0.4 at week 1 → 1.0 at week 40)
 export function computeProgress(weekNumber: number): number {
-  return 0.4 + (weekNumber / 40) * 0.6
+  return 0.4 + ((weekNumber - 1) / 39) * 0.6
 }
