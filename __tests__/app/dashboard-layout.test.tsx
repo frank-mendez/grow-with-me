@@ -4,14 +4,29 @@ import { render, screen } from '@testing-library/react'
 const mockGetUser = vi.fn()
 const mockRedirect = vi.fn(() => { throw new Error('NEXT_REDIRECT') })
 
+function makeProfileQuery(data: Record<string, unknown> | null = null) {
+  const q = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    single: vi.fn().mockResolvedValue({ data, error: null }),
+  }
+  q.select.mockReturnValue(q)
+  q.eq.mockReturnValue(q)
+  return q
+}
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() =>
-    Promise.resolve({ auth: { getUser: mockGetUser } })
+    Promise.resolve({
+      auth: { getUser: mockGetUser },
+      from: vi.fn().mockReturnValue(makeProfileQuery()),
+    })
   ),
 }))
 
 vi.mock('next/navigation', () => ({
   redirect: mockRedirect,
+  usePathname: vi.fn().mockReturnValue('/dashboard'),
 }))
 
 describe('DashboardLayout', () => {
