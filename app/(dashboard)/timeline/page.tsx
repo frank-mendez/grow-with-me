@@ -22,9 +22,15 @@ export default async function TimelinePage() {
   ])
 
   if (weeksResult.error) throw weeksResult.error
+  if (profileResult.error) {
+    console.warn('Failed to load profile due_date for timeline', {
+      userId: user?.id,
+      message: profileResult.error.message,
+    })
+  }
 
   const weeks = (weeksResult.data ?? []) as PregnancyWeek[]
-  const currentWeek = getCurrentWeek(profileResult.data?.due_date ?? null)
+  const currentWeek = getCurrentWeek(profileResult.error ? null : (profileResult.data?.due_date ?? null))
   const initialWeek = currentWeek ?? 1
 
   return (

@@ -9,13 +9,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('due_date')
     .eq('id', user.id)
     .single()
 
-  const currentWeek = getCurrentWeek(profile?.due_date ?? null)
+  if (profileError) {
+    console.warn('Failed to load profile due_date for dashboard header', {
+      userId: user.id,
+      message: profileError.message,
+    })
+  }
+
+  const currentWeek = getCurrentWeek(profileError ? null : (profile?.due_date ?? null))
   const weeksLeft = currentWeek !== null ? Math.max(0, 40 - currentWeek) : null
 
   return (

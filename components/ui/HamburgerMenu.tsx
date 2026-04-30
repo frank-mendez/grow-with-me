@@ -1,8 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
 
   return (
     <>
@@ -34,36 +41,50 @@ export function HamburgerMenu() {
 
       {/* Placeholder drawer — expand when implementing full nav menu */}
       {open && (
-        <div
-          role="dialog"
-          aria-label="Navigation menu"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 50,
-            background: 'rgba(11,26,20,0.96)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '2rem',
-          }}
-          onClick={() => setOpen(false)}
-        >
-          <button
-            type="button"
-            aria-label="Close menu"
+        <>
+          {/* Backdrop — closes on click */}
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 50 }}
             onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Dialog panel */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
             style={{
-              alignSelf: 'flex-end',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--cream)',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
+              position: 'fixed',
+              inset: 0,
+              zIndex: 51,
+              background: 'rgba(11,26,20,0.96)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '2rem',
+              pointerEvents: 'none',
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            ✕
-          </button>
-        </div>
+            <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setOpen(false)}
+                style={{
+                  alignSelf: 'flex-end',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--cream)',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

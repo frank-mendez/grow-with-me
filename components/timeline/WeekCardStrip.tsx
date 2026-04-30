@@ -53,6 +53,7 @@ export function WeekCardStrip({
     <div style={{ position: 'relative' }}>
       {/* Left arrow */}
       <motion.button
+        type="button"
         onClick={() => canGoPrev && onSelect(weeks[currentIndex - 1].week_number)}
         whileTap={{ scale: 0.86 }}
         aria-label="Previous week"
@@ -98,6 +99,7 @@ export function WeekCardStrip({
 
       {/* Right arrow */}
       <motion.button
+        type="button"
         onClick={() => canGoNext && onSelect(weeks[currentIndex + 1].week_number)}
         whileTap={{ scale: 0.86 }}
         aria-label="Next week"

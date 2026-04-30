@@ -21,6 +21,7 @@ export function WeekCard({ week, isSelected, isCurrent, onClick }: Readonly<Week
 
   return (
     <motion.button
+      type="button"
       onClick={onClick}
       animate={{
         scale: isSelected ? 1 : 0.9,
