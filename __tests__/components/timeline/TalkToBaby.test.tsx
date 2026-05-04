@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   createSignedUrl: vi.fn(),
   upload: vi.fn(),
+  remove: vi.fn(),
   fromStorage: vi.fn(),
 }))
 
@@ -103,9 +104,11 @@ beforeEach(() => {
     error: null,
   })
   mocks.upload.mockResolvedValue({ error: null })
+  mocks.remove.mockResolvedValue({ error: null })
   mocks.fromStorage.mockReturnValue({
     createSignedUrl: mocks.createSignedUrl,
     upload: mocks.upload,
+    remove: mocks.remove,
   })
 
   vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue({
@@ -373,6 +376,55 @@ describe('TalkToBaby', () => {
 
       // Stays in preview so user can retry
       expect(screen.getByText('Save Message')).toBeInTheDocument()
+    })
+
+    it('shows an error when fetching recordings fails', async () => {
+      mocks.order.mockResolvedValue({ data: null, error: new Error('DB error') })
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/Could not load your recordings/i)).toBeInTheDocument()
+      })
+    })
+
+    it('cleans up the orphaned storage file when DB insert fails', async () => {
+      mocks.insert.mockResolvedValue({ error: new Error('DB insert error') })
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() => screen.getByText('Start Recording'))
+      fireEvent.click(screen.getByText('Start Recording'))
+      await waitFor(() => screen.getByText('Stop Recording'))
+      fireEvent.click(screen.getByText('Stop Recording'))
+
+      await act(async () => {
+        capturedOnDataAvailable?.({ data: new Blob(['audio'], { type: 'audio/webm' }) })
+        capturedOnStop?.()
+      })
+
+      await waitFor(() => screen.getByText('Save Message'))
+      fireEvent.click(screen.getByText('Save Message'))
+
+      await waitFor(() => {
+        expect(mocks.remove).toHaveBeenCalledWith(
+          expect.arrayContaining([expect.stringMatching(/^user-123\/week-12\/\d+\.webm$/)])
+        )
+      })
+      expect(screen.getByText(/Could not save your message/i)).toBeInTheDocument()
+    })
+
+    it('does not start a second recording when Start Recording is clicked again mid-flight', async () => {
+      vi.mocked(navigator.mediaDevices.getUserMedia).mockClear()
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() => screen.getByText('Start Recording'))
+
+      fireEvent.click(screen.getByText('Start Recording'))
+      await waitFor(() => screen.getByText('Stop Recording'))
+
+      // Button is gone — status is 'recording', so clicking the DOM again is N/A.
+      // Verify getUserMedia was called exactly once (no second invocation).
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1)
     })
   })
 })

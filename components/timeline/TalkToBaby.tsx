@@ -20,7 +20,7 @@ function formatTimer(seconds: number): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -83,13 +83,17 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
     let active = true
 
     const fetchRecordings = async () => {
-      const { data } = await supabase
+      const { data, error: fetchErr } = await supabase
         .from('voice_entries')
         .select('*')
         .eq('week_id', weekId)
         .order('created_at', { ascending: false })
 
       if (!active) return
+      if (fetchErr) {
+        setError('Could not load your recordings. Please refresh.')
+        return
+      }
       const entries = (data ?? []) as VoiceEntry[]
       setRecordings(entries)
 
@@ -118,6 +122,7 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   }, [])
 
   async function startRecording() {
+    if (status !== 'idle') return
     setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -202,6 +207,7 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       .insert({ user_id: userId, week_id: weekId, audio_url: path })
 
     if (dbErr) {
+      await supabase.storage.from('voice-recordings').remove([path])
       setError('Could not save your message. Please try again.')
       setStatus('preview')
       return
@@ -373,7 +379,6 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
             transition={{ duration: 0.15 }}
             style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            { }
             <audio
               src={previewUrl}
               controls
