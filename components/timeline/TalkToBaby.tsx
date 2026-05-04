@@ -68,6 +68,7 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   const [timer, setTimer] = useState(0)
   const [recordings, setRecordings] = useState<VoiceEntry[]>([])
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+  const [signedUrlErrors, setSignedUrlErrors] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -77,6 +78,7 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const previewUrlRef = useRef<string | null>(null)
+  const isRequestingRef = useRef(false)
 
   useEffect(() => {
     if (!userId) return
@@ -98,15 +100,20 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       setRecordings(entries)
 
       const urls: Record<string, string> = {}
+      const urlErrs = new Set<string>()
       await Promise.all(
         entries.map(async (entry) => {
-          const { data: urlData } = await supabase.storage
+          const { data: urlData, error: urlErr } = await supabase.storage
             .from('voice-recordings')
             .createSignedUrl(entry.audio_url, 3600)
-          if (urlData?.signedUrl) urls[entry.id] = urlData.signedUrl
+          if (urlErr || !urlData?.signedUrl) urlErrs.add(entry.id)
+          else urls[entry.id] = urlData.signedUrl
         })
       )
-      if (active) setSignedUrls(urls)
+      if (active) {
+        setSignedUrls(urls)
+        setSignedUrlErrors(urlErrs)
+      }
     }
 
     fetchRecordings()
@@ -122,7 +129,8 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   }, [])
 
   async function startRecording() {
-    if (status !== 'idle') return
+    if (status !== 'idle' || isRequestingRef.current) return
+    isRequestingRef.current = true
     setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -138,6 +146,10 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       }
 
       recorder.onstop = () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current)
+          timerRef.current = null
+        }
         const blob = new Blob(chunksRef.current, { type: mimeType })
         const url = URL.createObjectURL(blob)
         audioBlobRef.current = blob
@@ -160,6 +172,8 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
           ? 'Microphone access was denied. Please allow it in your browser settings.'
           : 'Could not start recording. Please try again.'
       )
+    } finally {
+      isRequestingRef.current = false
     }
   }
 
@@ -168,7 +182,9 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-    mediaRecorderRef.current?.stop()
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+    }
   }
 
   function discardRecording() {
@@ -500,8 +516,11 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
               >
                 {formatDate(entry.created_at)}
               </p>
-              {signedUrls[entry.id] ? (
-                 
+              {signedUrlErrors.has(entry.id) ? (
+                <p style={{ fontSize: '12px', color: 'rgba(220,100,100,0.8)' }}>
+                  Could not load audio
+                </p>
+              ) : signedUrls[entry.id] ? (
                 <audio
                   src={signedUrls[entry.id]}
                   controls

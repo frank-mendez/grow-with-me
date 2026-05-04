@@ -374,9 +374,11 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
       </div>
 
       {/* Talk to Baby section */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px 24px' }}>
-        <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
-      </div>
+      {userId && (
+        <div style={{ position: 'relative', zIndex: 1, padding: '0 16px 24px' }}>
+          <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
+        </div>
+      )}
     </motion.div>
   )
 }

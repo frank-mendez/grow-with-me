@@ -49,10 +49,11 @@ class MockMediaRecorder {
   static isTypeSupported = vi.fn().mockReturnValue(true)
   start: ReturnType<typeof vi.fn>
   stop: ReturnType<typeof vi.fn>
+  state: RecordingState = 'inactive'
 
   constructor() {
-    this.start = vi.fn()
-    this.stop = vi.fn()
+    this.start = vi.fn().mockImplementation(() => { this.state = 'recording' })
+    this.stop = vi.fn().mockImplementation(() => { this.state = 'inactive' })
   }
 
   set onstop(fn: () => void) {
@@ -204,6 +205,28 @@ describe('TalkToBaby', () => {
           'user-123/week-12/1234567890.webm',
           3600
         )
+      })
+    })
+
+    it('shows "Could not load audio" when signed URL generation fails', async () => {
+      mocks.order.mockResolvedValue({
+        data: [
+          {
+            id: 'rec-1',
+            user_id: 'user-123',
+            week_id: 'wk-1',
+            audio_url: 'user-123/week-12/fail.webm',
+            created_at: '2026-05-04T10:30:00.000Z',
+          },
+        ],
+        error: null,
+      })
+      mocks.createSignedUrl.mockResolvedValue({ data: null, error: new Error('Storage error') })
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/Could not load audio/i)).toBeInTheDocument()
       })
     })
   })
