@@ -26,7 +26,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 // Static import is safe now that mocks are hoisted
-import { getCurrentWeek } from '@/app/(dashboard)/dashboard/page'
+import { getCurrentWeek } from '@/lib/pregnancy'
 
 // ── getCurrentWeek ────────────────────────────────────────────────────────────
 

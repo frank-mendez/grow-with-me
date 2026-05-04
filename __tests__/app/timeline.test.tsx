@@ -1,20 +1,52 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
-const mockOrder = vi.fn()
-const mockSelect = vi.fn(() => ({ order: mockOrder }))
-const mockFrom = vi.fn(() => ({ select: mockSelect }))
+const { mockGetUser, mockSingle, mockOrder, mockFrom } = vi.hoisted(() => {
+  const mockOrder = vi.fn()
+  const mockSingle = vi.fn()
+  const mockEq = vi.fn(() => ({ single: mockSingle }))
+  const mockWeeksSelect = vi.fn(() => ({ order: mockOrder }))
+  const mockProfileSelect = vi.fn(() => ({ eq: mockEq }))
+  const mockFrom = vi.fn((table: string) => {
+    if (table === 'profiles') return { select: mockProfileSelect }
+    return { select: mockWeeksSelect }
+  })
+  return { mockGetUser: vi.fn(), mockSingle, mockOrder, mockFrom }
+})
 
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => Promise.resolve({ from: mockFrom })),
+  createClient: vi.fn(() =>
+    Promise.resolve({ auth: { getUser: mockGetUser }, from: mockFrom })
+  ),
+}))
+
+vi.mock('@/components/timeline/TimelineView', () => ({
+  TimelineView: ({
+    weeks,
+    initialWeek,
+    currentWeek,
+  }: {
+    weeks: { id: string }[]
+    initialWeek: number
+    currentWeek: number | null
+  }) => (
+    <div
+      data-testid="timeline-view"
+      data-week-count={weeks.length}
+      data-initial-week={initialWeek}
+      data-current-week={currentWeek ?? ''}
+    />
+  ),
 }))
 
 describe('TimelinePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    mockSingle.mockResolvedValue({ data: { due_date: null }, error: null })
   })
 
-  it('renders weeks when data is available', async () => {
+  it('passes all weeks to TimelineView', async () => {
     mockOrder.mockResolvedValue({
       data: [
         { id: '1', week_number: 1, title: 'The Beginning', description: 'Everything starts here' },
@@ -27,35 +59,41 @@ describe('TimelinePage', () => {
     const jsx = await TimelinePage()
     render(jsx)
 
-    expect(screen.getByText('The Beginning')).toBeInTheDocument()
-    expect(screen.getByText('Everything starts here')).toBeInTheDocument()
-    expect(screen.getByText('Week Two')).toBeInTheDocument()
+    expect(screen.getByTestId('timeline-view')).toHaveAttribute('data-week-count', '2')
   })
 
-  it('renders an empty list when data is null', async () => {
-    mockOrder.mockResolvedValue({ data: null, error: null })
-
-    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
-    const jsx = await TimelinePage()
-    render(jsx)
-
-    expect(screen.getByRole('list')).toBeInTheDocument()
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0)
-  })
-
-  it('renders the "Timeline" heading', async () => {
+  it('defaults initialWeek to 1 when due_date is null', async () => {
     mockOrder.mockResolvedValue({ data: [], error: null })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     const jsx = await TimelinePage()
     render(jsx)
 
-    expect(screen.getByText('Timeline')).toBeInTheDocument()
+    expect(screen.getByTestId('timeline-view')).toHaveAttribute('data-initial-week', '1')
   })
 
-  it('throws when the Supabase query returns an error', async () => {
-    const dbError = new Error('Connection refused')
-    mockOrder.mockResolvedValue({ data: null, error: dbError })
+  it('passes a valid currentWeek when profile has a due_date', async () => {
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + 140)
+    mockSingle.mockResolvedValue({
+      data: { due_date: dueDate.toISOString().slice(0, 10) },
+      error: null,
+    })
+    mockOrder.mockResolvedValue({ data: [], error: null })
+
+    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
+    const jsx = await TimelinePage()
+    render(jsx)
+
+    const currentWeek = Number(
+      screen.getByTestId('timeline-view').getAttribute('data-current-week')
+    )
+    expect(currentWeek).toBeGreaterThanOrEqual(1)
+    expect(currentWeek).toBeLessThanOrEqual(40)
+  })
+
+  it('throws when the pregnancy_weeks query errors', async () => {
+    mockOrder.mockResolvedValue({ data: null, error: new Error('Connection refused') })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     await expect(TimelinePage()).rejects.toThrow('Connection refused')

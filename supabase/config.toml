@@ -228,14 +228,16 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# NOTE: Keep enabled = false for local development — Inbucket (above) handles email testing locally.
+# Set enabled = true only in production / CI where RESEND_API_KEY is available.
+[auth.email.smtp]
+enabled = false
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "noreply@growwithme.baby"
+sender_name = "Grow With Me"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -244,7 +246,7 @@ otp_expiry = 3600
 
 [auth.email.template.magic_link]
 subject = "Your journey awaits, mama 🌿"
-content_path = "./templates/magic_link.html"
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

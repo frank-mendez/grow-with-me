@@ -5,6 +5,10 @@ export interface PregnancyWeek {
   week_number: number
   title: string | null
   description: string | null
+  baby_size: string | null
+  trimester: string | null
+  approx_size: string | null
+  just_for_you: string | null
 }
 
 export interface VoiceEntry {
