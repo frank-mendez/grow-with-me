@@ -111,4 +111,18 @@ describe('TimelinePage', () => {
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     await expect(TimelinePage()).rejects.toThrow('Connection refused')
   })
+
+  it('skips the profile query and passes null userId when user is not authenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    mockOrder.mockResolvedValue({ data: [], error: null })
+
+    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
+    const jsx = await TimelinePage()
+    render(jsx)
+
+    const view = screen.getByTestId('timeline-view')
+    expect(view).toHaveAttribute('data-user-id', '')
+    expect(view).toHaveAttribute('data-initial-week', '1')
+    expect(mockFrom).not.toHaveBeenCalledWith('profiles')
+  })
 })
