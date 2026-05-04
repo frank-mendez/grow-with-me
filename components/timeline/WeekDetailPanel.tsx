@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import type { PregnancyWeek } from '@/types/database'
+import { TalkToBaby } from './TalkToBaby'
 
 const BabyVisual = dynamic(
   () => import('./BabyVisual').then((m) => ({ default: m.BabyVisual })),
@@ -14,6 +15,7 @@ const BabyVisual = dynamic(
 interface WeekDetailPanelProps {
   week: PregnancyWeek
   isCurrent: boolean
+  userId: string | null
 }
 
 function LeafBranch({ style, flip }: Readonly<{ style?: React.CSSProperties; flip?: boolean }>) {
@@ -129,7 +131,7 @@ function StatCircle({ children }: Readonly<{ children: React.ReactNode }>) {
   )
 }
 
-export function WeekDetailPanel({ week, isCurrent }: Readonly<WeekDetailPanelProps>) {
+export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetailPanelProps>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -154,7 +156,7 @@ export function WeekDetailPanel({ week, isCurrent }: Readonly<WeekDetailPanelPro
         }}
       />
 
-      <div className="flex flex-col md:flex-row" style={{ minHeight: 440 }}>
+      <div className="flex flex-col md:flex-row" style={{ minHeight: 440, position: 'relative', zIndex: 1 }}>
 
         {/* ── Left column: baby visual ─────────────────────── */}
         <div
@@ -369,6 +371,11 @@ export function WeekDetailPanel({ week, isCurrent }: Readonly<WeekDetailPanelPro
             </div>
           )}
         </div>
+      </div>
+
+      {/* Talk to Baby section */}
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 16px 24px' }}>
+        <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
       </div>
     </motion.div>
   )
