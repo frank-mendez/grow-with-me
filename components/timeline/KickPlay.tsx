@@ -48,6 +48,8 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   const [particles, setParticles] = useState<Particle[]>([])
 
   const pendingCountRef = useRef<number | null>(null)
+  // Stores the date the pending count belongs to (set at tap time, not flush time).
+  const pendingDateRef = useRef<string>(isoDate())
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const particleIdRef = useRef(0)
   const mountedRef = useRef(true)
@@ -111,7 +113,7 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
         supabase
           .from('kick_logs')
           .upsert(
-            { user_id: userId, date: isoDate(), count: pendingCountRef.current },
+            { user_id: userId, date: pendingDateRef.current, count: pendingCountRef.current },
             { onConflict: 'user_id,date' },
           )
       }
@@ -123,7 +125,30 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
 
     const today = isoDate()
     const dayChanged = today !== loadDateRef.current
-    if (dayChanged) loadDateRef.current = today
+
+    if (dayChanged) {
+      // Before switching days: flush any pending count to the old date so it
+      // isn't lost and doesn't bleed into the new day's row.
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+      if (pendingCountRef.current !== null) {
+        const oldCount = pendingCountRef.current
+        const oldDate = pendingDateRef.current
+        supabase
+          .from('kick_logs')
+          .upsert(
+            { user_id: userId, date: oldDate, count: oldCount },
+            { onConflict: 'user_id,date' },
+          )
+        pendingCountRef.current = null
+      }
+      loadDateRef.current = today
+    }
+
+    // Record which date this batch of taps belongs to before any async work.
+    pendingDateRef.current = today
 
     setCount((prev) => {
       const next = (dayChanged ? 0 : prev) + 1
@@ -143,10 +168,13 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
     debounceTimerRef.current = setTimeout(async () => {
       if (pendingCountRef.current !== null) {
         const n = pendingCountRef.current
+        // Capture the date at the start of this callback — pendingDateRef was set
+        // at tap time, so kicks cross midnight safely without going to the wrong day.
+        const date = pendingDateRef.current
         const { error } = await supabase
           .from('kick_logs')
           .upsert(
-            { user_id: userId, date: isoDate(), count: n },
+            { user_id: userId, date, count: n },
             { onConflict: 'user_id,date' },
           )
         // Only clear pending if no new taps arrived during the write and the write succeeded.

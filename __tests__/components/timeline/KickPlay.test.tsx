@@ -273,6 +273,60 @@ describe('KickPlay', () => {
         expect.anything(),
       )
     })
+
+    it('writes kick to the tap date even when the debounce fires after midnight', async () => {
+      vi.setSystemTime(new Date('2025-01-01T23:59:59.500'))
+      await loadedRender()
+
+      fireEvent.click(screen.getByRole('button', { name: /log a kick/i }))
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:00.400'))
+      await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+
+      expect(mocks.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ date: '2025-01-01', count: 1 }),
+        expect.anything(),
+      )
+    })
+
+    it('flushes pending count to old date immediately when a tap triggers midnight rollover', async () => {
+      vi.setSystemTime(new Date('2025-01-01T23:59:59.500'))
+      await loadedRender()
+
+      const btn = screen.getByRole('button', { name: /log a kick/i })
+      fireEvent.click(btn) // count=1 pending for 2025-01-01
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:01.000'))
+      fireEvent.click(btn) // triggers rollover flush
+
+      expect(mocks.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ date: '2025-01-01', count: 1 }),
+        expect.anything(),
+      )
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(900) })
+
+      expect(mocks.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ date: '2025-01-02', count: 1 }),
+        expect.anything(),
+      )
+    })
+
+    it('unmount flush writes to the tap date, not the unmount date', async () => {
+      vi.setSystemTime(new Date('2025-01-01T23:59:59.500'))
+      const { unmount } = render(<KickPlay userId="user-123" />)
+      await act(async () => {})
+
+      fireEvent.click(screen.getByRole('button', { name: /log a kick/i }))
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:00.400'))
+      unmount()
+
+      expect(mocks.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ date: '2025-01-01', count: 1 }),
+        expect.anything(),
+      )
+    })
   })
 
   describe('history', () => {

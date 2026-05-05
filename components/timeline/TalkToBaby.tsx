@@ -259,7 +259,6 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   return (
     <div
       style={{
-        marginTop: 24,
         padding: '1.25rem 1.5rem',
         background: 'rgba(14,32,22,0.75)',
         border: '1px solid rgba(201,160,50,0.14)',
