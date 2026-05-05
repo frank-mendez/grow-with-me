@@ -21,6 +21,8 @@ function getProgressMessage(count: number): string {
   return 'Lots of movement today!'
 }
 
+// Computes the local-time ISO date string for today or N days ago.
+// Called at write time so taps always go to the current day, even across midnight.
 function isoDate(daysAgo = 0): string {
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
@@ -38,10 +40,10 @@ function formatDay(iso: string): string {
 
 export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   const supabase = useMemo(() => createClient(), [])
-  const today = useMemo(() => isoDate(), [])
 
   const [count, setCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchFailed, setFetchFailed] = useState(false)
   const [history, setHistory] = useState<KickLog[]>([])
   const [particles, setParticles] = useState<Particle[]>([])
 
@@ -56,7 +58,9 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
     let active = true
 
     async function load() {
-      const { data } = await supabase
+      const loadDate = isoDate()
+
+      const { data, error } = await supabase
         .from('kick_logs')
         .select('*')
         .eq('user_id', userId)
@@ -65,19 +69,34 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
 
       if (!active) return
 
+      if (error) {
+        setFetchFailed(true)
+        setIsLoading(false)
+        return
+      }
+
       const logs = (data ?? []) as KickLog[]
-      const todayLog = logs.find((l) => l.date === today)
+      const todayLog = logs.find((l) => l.date === loadDate)
       setCount(todayLog?.count ?? 0)
-      setHistory(logs.filter((l) => l.date !== today).slice(0, 5))
+
+      // Fill the last 5 calendar days, using 0 for any day without a logged row.
+      const logsByDate = new Map(
+        logs.filter((l) => l.date !== loadDate).map((l) => [l.date, l]),
+      )
+      setHistory(
+        Array.from({ length: 5 }, (_, i) => {
+          const date = isoDate(i + 1)
+          return logsByDate.get(date) ?? { id: date, user_id: userId, date, count: 0 }
+        }),
+      )
       setIsLoading(false)
     }
 
     load()
-    return () => {
-      active = false
-    }
-  }, [userId, today, supabase])
+    return () => { active = false }
+  }, [userId, supabase])
 
+  // Fire-and-forget flush on unmount for any unwritten pending count.
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
@@ -85,15 +104,15 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
         supabase
           .from('kick_logs')
           .upsert(
-            { user_id: userId, date: today, count: pendingCountRef.current },
+            { user_id: userId, date: isoDate(), count: pendingCountRef.current },
             { onConflict: 'user_id,date' },
           )
       }
     }
-  }, [supabase, userId, today])
+  }, [supabase, userId])
 
   function handleTap() {
-    if (isLoading) return
+    if (isLoading || fetchFailed) return
 
     setCount((prev) => {
       const next = prev + 1
@@ -110,15 +129,20 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
     ])
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-    debounceTimerRef.current = setTimeout(() => {
+    debounceTimerRef.current = setTimeout(async () => {
       if (pendingCountRef.current !== null) {
-        supabase
+        const n = pendingCountRef.current
+        const { error } = await supabase
           .from('kick_logs')
           .upsert(
-            { user_id: userId, date: today, count: pendingCountRef.current },
+            { user_id: userId, date: isoDate(), count: n },
             { onConflict: 'user_id,date' },
           )
-        pendingCountRef.current = null
+        // Only clear pending if no new taps arrived during the write and the write succeeded.
+        // On error, leave pendingCountRef so the next debounce or unmount flush retries.
+        if (!error && pendingCountRef.current === n) {
+          pendingCountRef.current = null
+        }
       }
     }, DEBOUNCE_MS)
   }
@@ -153,6 +177,7 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   }
 
   const progressMessage = getProgressMessage(count)
+  const showHistory = history.some((d) => d.count > 0)
 
   return (
     <div
@@ -198,161 +223,169 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
         </div>
       </div>
 
-      {/* Tap zone */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 14,
-          paddingBottom: 8,
-        }}
-      >
-        <div style={{ position: 'relative' }}>
-          {/* Burst particles */}
-          <AnimatePresence>
-            {particles.map((p) => (
-              <motion.div
-                key={p.id}
-                initial={{ x: 0, y: 0, opacity: 0.9, scale: 1 }}
-                animate={{
-                  x: Math.cos(p.angle) * 62,
-                  y: Math.sin(p.angle) * 62,
-                  opacity: 0,
-                  scale: 0.2,
-                }}
-                transition={{ duration: 0.55, ease: 'easeOut' }}
-                onAnimationComplete={() => {
-                  if (mountedRef.current) {
-                    setParticles((prev) => prev.filter((q) => q.id !== p.id))
-                  }
-                }}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -3.5,
-                  marginLeft: -3.5,
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: 'var(--gold-light)',
-                  pointerEvents: 'none',
-                  zIndex: 2,
-                }}
-              />
-            ))}
-          </AnimatePresence>
-
-          {/* Tap button */}
-          <motion.button
-            onClick={handleTap}
-            whileTap={{ scale: 0.91 }}
+      {fetchFailed ? (
+        <p style={{ fontSize: '13px', color: 'rgba(220,100,100,0.85)', lineHeight: 1.55 }}>
+          Could not load kick data. Please refresh.
+        </p>
+      ) : (
+        <>
+          {/* Tap zone */}
+          <div
             style={{
-              width: 148,
-              height: 148,
-              borderRadius: '50%',
-              background: 'rgba(201,160,50,0.07)',
-              border: '1.5px solid rgba(201,160,50,0.28)',
-              boxShadow:
-                '0 0 28px rgba(201,160,50,0.07), inset 0 0 20px rgba(201,160,50,0.04)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              userSelect: 'none',
-              position: 'relative',
-              zIndex: 1,
-            }}
-            aria-label={`Log a kick. ${count} kick${count === 1 ? '' : 's'} today.`}
-          >
-            <motion.span
-              key={count}
-              initial={{ scale: 1.18, opacity: 0.7 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-              style={{
-                fontFamily: 'var(--font-cormorant)',
-                fontSize: '3.75rem',
-                color: 'var(--cream)',
-                fontWeight: 300,
-                lineHeight: 1,
-                display: 'block',
-              }}
-            >
-              {count}
-            </motion.span>
-            <span
-              style={{
-                fontSize: '11px',
-                color: 'var(--cream-dim)',
-                opacity: 0.65,
-                marginTop: 4,
-              }}
-            >
-              kicks today
-            </span>
-          </motion.button>
-        </div>
-
-        {/* Progress message */}
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={progressMessage}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-            style={{ fontSize: '13px', color: 'var(--cream-dim)', textAlign: 'center' }}
-          >
-            {progressMessage}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-
-      {/* History */}
-      {history.length > 0 && (
-        <>
-          <div style={{ height: 1, background: 'rgba(201,160,50,0.1)', margin: '16px 0' }} />
-          <p
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'var(--gold)',
-              opacity: 0.7,
-              marginBottom: 10,
+              gap: 14,
+              paddingBottom: 8,
             }}
           >
-            Recent days
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {history.map((log) => (
-              <div
-                key={log.id}
+            <div style={{ position: 'relative' }}>
+              {/* Burst particles */}
+              <AnimatePresence>
+                {particles.map((p) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ x: 0, y: 0, opacity: 0.9, scale: 1 }}
+                    animate={{
+                      x: Math.cos(p.angle) * 62,
+                      y: Math.sin(p.angle) * 62,
+                      opacity: 0,
+                      scale: 0.2,
+                    }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                    onAnimationComplete={() => {
+                      if (mountedRef.current) {
+                        setParticles((prev) => prev.filter((q) => q.id !== p.id))
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      marginTop: -3.5,
+                      marginLeft: -3.5,
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: 'var(--gold-light)',
+                      pointerEvents: 'none',
+                      zIndex: 2,
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
+
+              {/* Tap button */}
+              <motion.button
+                onClick={handleTap}
+                whileTap={{ scale: 0.91 }}
                 style={{
+                  width: 148,
+                  height: 148,
+                  borderRadius: '50%',
+                  background: 'rgba(201,160,50,0.07)',
+                  border: '1.5px solid rgba(201,160,50,0.28)',
+                  boxShadow:
+                    '0 0 28px rgba(201,160,50,0.07), inset 0 0 20px rgba(201,160,50,0.04)',
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
                   alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  position: 'relative',
+                  zIndex: 1,
                 }}
+                aria-label={`Log a kick. ${count} kick${count === 1 ? '' : 's'} today.`}
               >
-                <span style={{ fontSize: '12px', color: 'var(--cream-dim)', opacity: 0.55 }}>
-                  {formatDay(log.date)}
-                </span>
-                <span
+                <motion.span
+                  key={count}
+                  initial={{ scale: 1.18, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
                   style={{
-                    fontSize: '13px',
-                    color: 'var(--cream)',
                     fontFamily: 'var(--font-cormorant)',
-                    fontWeight: 400,
+                    fontSize: '3.75rem',
+                    color: 'var(--cream)',
+                    fontWeight: 300,
+                    lineHeight: 1,
+                    display: 'block',
                   }}
                 >
-                  {log.count} kick{log.count === 1 ? '' : 's'}
+                  {count}
+                </motion.span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--cream-dim)',
+                    opacity: 0.65,
+                    marginTop: 4,
+                  }}
+                >
+                  kicks today
                 </span>
-              </div>
-            ))}
+              </motion.button>
+            </div>
+
+            {/* Progress message */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={progressMessage}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+                style={{ fontSize: '13px', color: 'var(--cream-dim)', textAlign: 'center' }}
+              >
+                {progressMessage}
+              </motion.p>
+            </AnimatePresence>
           </div>
+
+          {/* History — only shown once at least one prior day has kicks */}
+          {showHistory && (
+            <>
+              <div style={{ height: 1, background: 'rgba(201,160,50,0.1)', margin: '16px 0' }} />
+              <p
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--gold)',
+                  opacity: 0.7,
+                  marginBottom: 10,
+                }}
+              >
+                Recent days
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {history.map((log) => (
+                  <div
+                    key={log.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: '12px', color: 'var(--cream-dim)', opacity: 0.55 }}>
+                      {formatDay(log.date)}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        color: 'var(--cream)',
+                        fontFamily: 'var(--font-cormorant)',
+                        fontWeight: 400,
+                      }}
+                    >
+                      {log.count} kick{log.count === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
