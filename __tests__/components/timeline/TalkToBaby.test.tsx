@@ -387,6 +387,35 @@ describe('TalkToBaby', () => {
       })
     })
 
+    it('falls back to audio/webm content type when blob.type is empty', async () => {
+      MockMediaRecorder.isTypeSupported
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() => screen.getByText('Start Recording'))
+      fireEvent.click(screen.getByText('Start Recording'))
+      await waitFor(() => screen.getByText('Stop Recording'))
+      fireEvent.click(screen.getByText('Stop Recording'))
+
+      await act(async () => {
+        capturedOnDataAvailable?.({ data: new Blob(['audio'], { type: '' }) })
+        capturedOnStop?.()
+      })
+
+      await waitFor(() => screen.getByText('Save Message'))
+      fireEvent.click(screen.getByText('Save Message'))
+
+      await waitFor(() => {
+        expect(mocks.upload).toHaveBeenCalledWith(
+          expect.stringMatching(/^user-123\/week-12\/\d+\.webm$/),
+          expect.any(Blob),
+          expect.objectContaining({ contentType: 'audio/webm' })
+        )
+      })
+    })
+
     it('returns to idle after a successful save', async () => {
       await reachPreviewState()
       fireEvent.click(screen.getByText('Save Message'))

@@ -216,11 +216,12 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
 
     try {
       const ext = mimeToExt(blob.type)
+      const contentType = blob.type || `audio/${ext}`
       const path = `${userId}/week-${weekNumber}/${Date.now()}.${ext}`
 
       const { error: uploadErr } = await supabase.storage
         .from('voice-recordings')
-        .upload(path, blob, { contentType: blob.type })
+        .upload(path, blob, { contentType })
 
       if (uploadErr) {
         setError('Could not save your message. Please try again.')
