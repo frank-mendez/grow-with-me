@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import type { PregnancyWeek } from '@/types/database'
 import { TalkToBaby } from './TalkToBaby'
+import { KickPlay } from './KickPlay'
 
 const BabyVisual = dynamic(
   () => import('./BabyVisual').then((m) => ({ default: m.BabyVisual })),
@@ -373,9 +374,19 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
         </div>
       </div>
 
-      {/* Talk to Baby section */}
+      {/* Kick Play + Talk to Baby sections */}
       {userId && (
-        <div style={{ position: 'relative', zIndex: 1, padding: '0 16px 24px' }}>
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            padding: '0 16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {isCurrent && <KickPlay userId={userId} />}
           <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
         </div>
       )}
