@@ -28,9 +28,9 @@ function formatDate(iso: string): string {
   })
 }
 
-function getSupportedMimeType(): string {
+function getSupportedMimeType(): string | null {
   const candidates = ['audio/webm', 'audio/mp4', 'audio/ogg']
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? 'audio/webm'
+  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? null
 }
 
 function mimeToExt(mimeType: string): string {
@@ -140,7 +140,10 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       streamRef.current = stream
 
       const mimeType = getSupportedMimeType()
-      const recorder = new MediaRecorder(stream, { mimeType })
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
+      const blobType = recorder.mimeType || mimeType || ''
       mediaRecorderRef.current = recorder
       chunksRef.current = []
 
@@ -153,7 +156,7 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
           clearInterval(timerRef.current)
           timerRef.current = null
         }
-        const blob = new Blob(chunksRef.current, { type: mimeType })
+        const blob = new Blob(chunksRef.current, { type: blobType })
         const url = URL.createObjectURL(blob)
         audioBlobRef.current = blob
         previewUrlRef.current = url
@@ -167,6 +170,8 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
       setTimer(0)
       timerRef.current = setInterval(() => setTimer((t) => t + 1), 1000)
     } catch (err) {
+      streamRef.current?.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
       const isDenied =
         err instanceof Error &&
         (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')

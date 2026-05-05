@@ -398,6 +398,30 @@ describe('TalkToBaby', () => {
   })
 
   describe('error handling', () => {
+    it('stops stream tracks when MediaRecorder construction fails', async () => {
+      const mockTrackStop = vi.fn()
+      vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValueOnce({
+        getTracks: () => [{ stop: mockTrackStop }],
+      } as unknown as MediaStream)
+
+      vi.stubGlobal('MediaRecorder', class {
+        static isTypeSupported = vi.fn().mockReturnValue(true)
+        constructor() { throw new Error('NotSupportedError') }
+      })
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() => screen.getByText('Start Recording'))
+
+      fireEvent.click(screen.getByText('Start Recording'))
+
+      await waitFor(() => {
+        expect(mockTrackStop).toHaveBeenCalled()
+        expect(screen.getByText(/Could not start recording/i)).toBeInTheDocument()
+      })
+
+      vi.stubGlobal('MediaRecorder', MockMediaRecorder)
+    })
+
     it('shows a friendly message when microphone is denied', async () => {
       vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(
         Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' })
@@ -474,6 +498,22 @@ describe('TalkToBaby', () => {
         )
       })
       expect(screen.getByText(/Could not save your message/i)).toBeInTheDocument()
+    })
+
+    it('starts recording when no MIME type is explicitly supported', async () => {
+      MockMediaRecorder.isTypeSupported
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() => screen.getByText('Start Recording'))
+
+      fireEvent.click(screen.getByText('Start Recording'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Stop Recording')).toBeInTheDocument()
+      })
     })
 
     it('does not start a second recording when Start Recording is clicked again mid-flight', async () => {
