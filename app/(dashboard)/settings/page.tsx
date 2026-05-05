@@ -1,30 +1,9 @@
 import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { Container } from '@/components/ui/container'
 import { Header } from '@/components/ui/header'
 import type { Profile } from '@/types/database'
-
-async function saveDueDate(formData: FormData) {
-  'use server'
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const raw = formData.get('due_date')
-  if (typeof raw !== 'string' || !raw) return
-
-  // Basic YYYY-MM-DD validation
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return
-
-  await supabase
-    .from('profiles')
-    .update({ due_date: raw })
-    .eq('id', user.id)
-
-  revalidatePath('/dashboard')
-  redirect('/dashboard')
-}
+import { saveDueDate } from './actions'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
