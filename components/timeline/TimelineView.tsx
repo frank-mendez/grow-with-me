@@ -10,9 +10,10 @@ interface TimelineViewProps {
   weeks: PregnancyWeek[]
   initialWeek: number
   currentWeek: number | null
+  userId: string | null
 }
 
-export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<TimelineViewProps>) {
+export function TimelineView({ weeks, initialWeek, currentWeek, userId }: Readonly<TimelineViewProps>) {
   const firstAvailableWeek = weeks.find((w) => w.week_number === initialWeek)?.week_number ?? weeks[0]?.week_number ?? initialWeek
   const [selectedWeek, setSelectedWeek] = useState(firstAvailableWeek)
   const selected = weeks.find((w) => w.week_number === selectedWeek) ?? weeks[0]
@@ -85,6 +86,7 @@ export function TimelineView({ weeks, initialWeek, currentWeek }: Readonly<Timel
               key={selected.id}
               week={selected}
               isCurrent={selected.week_number === currentWeek}
+              userId={userId}
             />
           )}
         </AnimatePresence>

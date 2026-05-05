@@ -25,16 +25,19 @@ vi.mock('@/components/timeline/TimelineView', () => ({
     weeks,
     initialWeek,
     currentWeek,
+    userId,
   }: {
     weeks: { id: string }[]
     initialWeek: number
     currentWeek: number | null
+    userId: string | null
   }) => (
     <div
       data-testid="timeline-view"
       data-week-count={weeks.length}
       data-initial-week={initialWeek}
       data-current-week={currentWeek ?? ''}
+      data-user-id={userId ?? ''}
     />
   ),
 }))
@@ -92,10 +95,34 @@ describe('TimelinePage', () => {
     expect(currentWeek).toBeLessThanOrEqual(40)
   })
 
+  it('forwards userId from auth.getUser to TimelineView', async () => {
+    mockOrder.mockResolvedValue({ data: [], error: null })
+
+    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
+    const jsx = await TimelinePage()
+    render(jsx)
+
+    expect(screen.getByTestId('timeline-view')).toHaveAttribute('data-user-id', 'user-1')
+  })
+
   it('throws when the pregnancy_weeks query errors', async () => {
     mockOrder.mockResolvedValue({ data: null, error: new Error('Connection refused') })
 
     const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
     await expect(TimelinePage()).rejects.toThrow('Connection refused')
+  })
+
+  it('skips the profile query and passes null userId when user is not authenticated', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    mockOrder.mockResolvedValue({ data: [], error: null })
+
+    const { default: TimelinePage } = await import('@/app/(dashboard)/timeline/page')
+    const jsx = await TimelinePage()
+    render(jsx)
+
+    const view = screen.getByTestId('timeline-view')
+    expect(view).toHaveAttribute('data-user-id', '')
+    expect(view).toHaveAttribute('data-initial-week', '1')
+    expect(mockFrom).not.toHaveBeenCalledWith('profiles')
   })
 })

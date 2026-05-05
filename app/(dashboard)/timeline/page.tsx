@@ -38,6 +38,7 @@ export default async function TimelinePage() {
       weeks={weeks}
       initialWeek={initialWeek}
       currentWeek={currentWeek}
+      userId={user?.id ?? null}
     />
   )
 }
