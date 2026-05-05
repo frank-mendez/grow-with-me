@@ -56,7 +56,7 @@ const NAV_ITEMS: Array<{
 }> = [
   { href: '/dashboard', label: 'Home', Icon: HomeIcon },
   { href: '/timeline', label: 'Timeline', Icon: TimelineIcon },
-  { href: '#', label: 'Kicks', Icon: KicksIcon, soon: true },
+  { href: '/kicks', label: 'Kicks', Icon: KicksIcon },
   { href: '#', label: 'Mood', Icon: MoodIcon, soon: true },
 ]
 
