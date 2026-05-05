@@ -79,15 +79,18 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
   const streamRef = useRef<MediaStream | null>(null)
   const previewUrlRef = useRef<string | null>(null)
   const isRequestingRef = useRef(false)
+  const isSavingRef = useRef(false)
 
   useEffect(() => {
     if (!userId) return
     let active = true
 
     const fetchRecordings = async () => {
+      setError(null)
       const { data, error: fetchErr } = await supabase
         .from('voice_entries')
         .select('*')
+        .eq('user_id', userId)
         .eq('week_id', weekId)
         .order('created_at', { ascending: false })
 
@@ -200,44 +203,49 @@ export function TalkToBaby({ weekId, weekNumber, userId }: Readonly<TalkToBabyPr
 
   async function saveRecording() {
     const blob = audioBlobRef.current
-    if (!blob || !userId) return
+    if (!blob || !userId || isSavingRef.current) return
 
+    isSavingRef.current = true
     setStatus('uploading')
     setError(null)
 
-    const ext = mimeToExt(blob.type)
-    const path = `${userId}/week-${weekNumber}/${Date.now()}.${ext}`
+    try {
+      const ext = mimeToExt(blob.type)
+      const path = `${userId}/week-${weekNumber}/${Date.now()}.${ext}`
 
-    const { error: uploadErr } = await supabase.storage
-      .from('voice-recordings')
-      .upload(path, blob, { contentType: blob.type })
+      const { error: uploadErr } = await supabase.storage
+        .from('voice-recordings')
+        .upload(path, blob, { contentType: blob.type })
 
-    if (uploadErr) {
-      setError('Could not save your message. Please try again.')
-      setStatus('preview')
-      return
+      if (uploadErr) {
+        setError('Could not save your message. Please try again.')
+        setStatus('preview')
+        return
+      }
+
+      const { error: dbErr } = await supabase
+        .from('voice_entries')
+        .insert({ user_id: userId, week_id: weekId, audio_url: path })
+
+      if (dbErr) {
+        await supabase.storage.from('voice-recordings').remove([path])
+        setError('Could not save your message. Please try again.')
+        setStatus('preview')
+        return
+      }
+
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = null
+      }
+      audioBlobRef.current = null
+      setPreviewUrl(null)
+      setTimer(0)
+      setStatus('idle')
+      setRefreshKey((k) => k + 1)
+    } finally {
+      isSavingRef.current = false
     }
-
-    const { error: dbErr } = await supabase
-      .from('voice_entries')
-      .insert({ user_id: userId, week_id: weekId, audio_url: path })
-
-    if (dbErr) {
-      await supabase.storage.from('voice-recordings').remove([path])
-      setError('Could not save your message. Please try again.')
-      setStatus('preview')
-      return
-    }
-
-    if (previewUrlRef.current) {
-      URL.revokeObjectURL(previewUrlRef.current)
-      previewUrlRef.current = null
-    }
-    audioBlobRef.current = null
-    setPreviewUrl(null)
-    setTimer(0)
-    setStatus('idle')
-    setRefreshKey((k) => k + 1)
   }
 
   if (!userId) return null

@@ -157,6 +157,46 @@ describe('TalkToBaby', () => {
         expect(mocks.eq).toHaveBeenCalledWith('week_id', 'wk-42')
       })
     })
+
+    it('filters the query by user_id in addition to week_id', async () => {
+      render(<TalkToBaby weekId="wk-42" weekNumber={12} userId="user-123" />)
+      await waitFor(() => {
+        expect(mocks.eq).toHaveBeenCalledWith('user_id', 'user-123')
+        expect(mocks.eq).toHaveBeenCalledWith('week_id', 'wk-42')
+      })
+    })
+
+    it('clears a stale fetch error when a subsequent fetch succeeds', async () => {
+      // First render: fetch fails → error shown
+      mocks.order.mockResolvedValueOnce({ data: null, error: new Error('transient') })
+
+      render(<TalkToBaby weekId="wk-1" weekNumber={12} userId="user-123" />)
+      await waitFor(() =>
+        expect(screen.getByText(/Could not load your recordings/i)).toBeInTheDocument()
+      )
+
+      // Next fetch (triggered by refreshKey) succeeds → error cleared
+      mocks.order.mockResolvedValueOnce({ data: [], error: null })
+
+      // Reach preview state and save to increment refreshKey
+      mocks.order.mockResolvedValue({ data: [], error: null })
+      mocks.upload.mockResolvedValue({ error: null })
+      mocks.insert.mockResolvedValue({ error: null })
+
+      fireEvent.click(await screen.findByText('Start Recording'))
+      await waitFor(() => screen.getByText('Stop Recording'))
+      fireEvent.click(screen.getByText('Stop Recording'))
+      await act(async () => {
+        capturedOnDataAvailable?.({ data: new Blob(['audio'], { type: 'audio/webm' }) })
+        capturedOnStop?.()
+      })
+      await waitFor(() => screen.getByText('Save Message'))
+      fireEvent.click(screen.getByText('Save Message'))
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Could not load your recordings/i)).not.toBeInTheDocument()
+      })
+    })
   })
 
   describe('recordings list', () => {
