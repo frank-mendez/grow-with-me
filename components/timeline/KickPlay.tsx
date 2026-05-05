@@ -51,14 +51,21 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const particleIdRef = useRef(0)
   const mountedRef = useRef(true)
+  // Tracks the calendar date active when the session started, so we can detect
+  // a day rollover and reset the displayed count rather than carry it forward.
+  const loadDateRef = useRef(isoDate())
 
-  useEffect(() => () => { mountedRef.current = false }, [])
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   useEffect(() => {
     let active = true
 
     async function load() {
       const loadDate = isoDate()
+      loadDateRef.current = loadDate
 
       const { data, error } = await supabase
         .from('kick_logs')
@@ -114,8 +121,12 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   function handleTap() {
     if (isLoading || fetchFailed) return
 
+    const today = isoDate()
+    const dayChanged = today !== loadDateRef.current
+    if (dayChanged) loadDateRef.current = today
+
     setCount((prev) => {
-      const next = prev + 1
+      const next = (dayChanged ? 0 : prev) + 1
       pendingCountRef.current = next
       return next
     })
@@ -177,7 +188,7 @@ export function KickPlay({ userId }: Readonly<KickPlayProps>) {
   }
 
   const progressMessage = getProgressMessage(count)
-  const showHistory = history.some((d) => d.count > 0)
+  const showHistory = count > 0 || history.some((d) => d.count > 0)
 
   return (
     <div

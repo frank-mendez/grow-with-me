@@ -293,7 +293,15 @@ describe('KickPlay', () => {
       })
     })
 
-    it('does not show the Recent days section when no prior days have kicks', async () => {
+    it('does not show the Recent days section when there is no activity at all', async () => {
+      // All zeros: history section has nothing meaningful to show
+      render(<KickPlay userId="user-123" />)
+      await waitFor(() => screen.getByText('0'))
+
+      expect(screen.queryByText('Recent days')).not.toBeInTheDocument()
+    })
+
+    it('shows the Recent days section when today has kicks but no prior days do', async () => {
       setupQueryChain({
         data: [{ id: 'k-today', user_id: 'user-123', date: localDate(), count: 2 }],
         error: null,
@@ -302,7 +310,7 @@ describe('KickPlay', () => {
       render(<KickPlay userId="user-123" />)
       await waitFor(() => screen.getByText('2'))
 
-      expect(screen.queryByText('Recent days')).not.toBeInTheDocument()
+      expect(screen.getByText('Recent days')).toBeInTheDocument()
     })
 
     it('fills in 0 kicks for calendar days with no logged row', async () => {
