@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockGetUser, mockUpdate, mockFrom, mockRedirect, mockRevalidatePath } = vi.hoisted(() => {
-  const mockUpdate = vi.fn()
+const { mockGetUser, mockUpdate, mockEq, mockFrom, mockRedirect, mockRevalidatePath } = vi.hoisted(() => {
   const mockEq = vi.fn(() => Promise.resolve({ error: null }))
-  mockUpdate.mockReturnValue({ eq: mockEq })
+  const mockUpdate = vi.fn(() => ({ eq: mockEq }))
   const mockFrom = vi.fn(() => ({ update: mockUpdate }))
   return {
     mockGetUser: vi.fn(),
     mockUpdate,
+    mockEq,
     mockFrom,
     mockRedirect: vi.fn(() => { throw new Error('NEXT_REDIRECT') }),
     mockRevalidatePath: vi.fn(),
@@ -75,5 +75,31 @@ describe('saveDueDate', () => {
 
     expect(mockFrom).not.toHaveBeenCalled()
     expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('returns early when due_date is an impossible calendar date', async () => {
+    const { saveDueDate } = await import('@/app/(dashboard)/settings/actions')
+    await saveDueDate(makeFormData({ due_date: '2025-99-99' }))
+
+    expect(mockFrom).not.toHaveBeenCalled()
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('returns early for a structurally valid but non-existent date (e.g. Feb 30)', async () => {
+    const { saveDueDate } = await import('@/app/(dashboard)/settings/actions')
+    await saveDueDate(makeFormData({ due_date: '2025-02-30' }))
+
+    expect(mockFrom).not.toHaveBeenCalled()
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('throws when Supabase update returns an error', async () => {
+    mockEq.mockResolvedValue({ error: { message: 'RLS violation' } })
+
+    const { saveDueDate } = await import('@/app/(dashboard)/settings/actions')
+    await expect(saveDueDate(makeFormData({ due_date: '2025-12-01' }))).rejects.toThrow('RLS violation')
+
+    expect(mockRedirect).not.toHaveBeenCalled()
+    expect(mockRevalidatePath).not.toHaveBeenCalled()
   })
 })

@@ -12,9 +12,9 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('due_date, display_name')
+    .select('due_date')
     .eq('id', user.id)
-    .single<Pick<Profile, 'due_date' | 'display_name'>>()
+    .single<Pick<Profile, 'due_date'>>()
 
   return (
     <Container className="pt-6">

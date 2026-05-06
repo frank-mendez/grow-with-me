@@ -35,7 +35,7 @@ describe('SettingsPage', () => {
   })
 
   it('renders the due date label and save button', async () => {
-    mockSingle.mockResolvedValue({ data: { due_date: null, display_name: 'Alice' } })
+    mockSingle.mockResolvedValue({ data: { due_date: null } })
 
     const { default: SettingsPage } = await import('@/app/(dashboard)/settings/page')
     const jsx = await SettingsPage()
@@ -46,7 +46,7 @@ describe('SettingsPage', () => {
   })
 
   it('pre-fills the date input when profile has a due date', async () => {
-    mockSingle.mockResolvedValue({ data: { due_date: '2025-12-01', display_name: 'Alice' } })
+    mockSingle.mockResolvedValue({ data: { due_date: '2025-12-01' } })
 
     const { default: SettingsPage } = await import('@/app/(dashboard)/settings/page')
     const jsx = await SettingsPage()
@@ -56,7 +56,7 @@ describe('SettingsPage', () => {
   })
 
   it('leaves the date input empty when profile has no due date', async () => {
-    mockSingle.mockResolvedValue({ data: { due_date: null, display_name: 'Alice' } })
+    mockSingle.mockResolvedValue({ data: { due_date: null } })
 
     const { default: SettingsPage } = await import('@/app/(dashboard)/settings/page')
     const jsx = await SettingsPage()
