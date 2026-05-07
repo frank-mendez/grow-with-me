@@ -40,7 +40,7 @@ export const themes: ThemePreview[] = [
     card: '#152440',
     accent: '#B8A8DC',
     text: '#DCD8F0',
-    borderColor: 'rgba(176, 160, 220, 0.18)',
+    borderColor: 'rgba(184, 168, 220, 0.18)',
   },
   {
     id: 'light',

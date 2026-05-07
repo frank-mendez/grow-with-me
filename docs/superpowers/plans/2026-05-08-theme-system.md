@@ -125,7 +125,7 @@ export const themes: ThemePreview[] = [
     card: '#152440',
     accent: '#B8A8DC',
     text: '#DCD8F0',
-    borderColor: 'rgba(176, 160, 220, 0.18)',
+    borderColor: 'rgba(184, 168, 220, 0.18)',
   },
   {
     id: 'light',
@@ -239,7 +239,7 @@ Replace the entire file with the following. All animations are preserved unchang
   --bg:             #0D1B30;
   --card:           #152440;
   --card-alt:       rgba(18, 32, 56, 0.9);
-  --card-border:    rgba(176, 160, 220, 0.18);
+  --card-border:    rgba(184, 168, 220, 0.18);
   --overlay-bg:     rgba(8, 12, 24, 0.97);
   --accent:         #B8A8DC;
   --accent-dim:     rgba(184, 168, 220, 0.15);
