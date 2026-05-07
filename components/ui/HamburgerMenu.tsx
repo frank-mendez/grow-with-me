@@ -1,8 +1,20 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { signOut } from '@/app/(dashboard)/settings/actions'
+
+const NAV_LINKS = [
+  { href: '/dashboard', label: 'Home' },
+  { href: '/timeline', label: 'Timeline' },
+  { href: '/kicks', label: 'Kick Tracker' },
+  { href: '/mood', label: 'Mood Garden' },
+  { href: '/settings', label: 'Settings' },
+]
 
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!open) return
@@ -39,17 +51,14 @@ export function HamburgerMenu() {
         </svg>
       </button>
 
-      {/* Placeholder drawer — expand when implementing full nav menu */}
       {open && (
         <>
-          {/* Backdrop — closes on click */}
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 50 }}
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Dialog panel */}
           <div
             role="dialog"
             aria-modal="true"
@@ -58,31 +67,74 @@ export function HamburgerMenu() {
               position: 'fixed',
               inset: 0,
               zIndex: 51,
-              background: 'rgba(11,26,20,0.96)',
+              background: 'rgba(11,26,20,0.97)',
               display: 'flex',
               flexDirection: 'column',
-              padding: '2rem',
-              pointerEvents: 'none',
+              padding: '1.5rem 2rem 2.5rem',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+              style={{
+                alignSelf: 'flex-end',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--cream)',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+
+            <nav style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+              {NAV_LINKS.map(({ href, label }) => {
+                const isActive = pathname === href || pathname.startsWith(href + '/')
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setOpen(false)}
+                    style={{
+                      fontFamily: 'var(--font-cormorant)',
+                      fontSize: '2rem',
+                      fontWeight: 300,
+                      fontStyle: 'italic',
+                      color: isActive ? 'var(--gold)' : 'var(--cream)',
+                      textDecoration: 'none',
+                      padding: '0.5rem 0',
+                      borderBottom: '1px solid rgba(201,160,50,0.08)',
+                      letterSpacing: '0.01em',
+                    }}
+                  >
+                    {label}
+                  </Link>
+                )
+              })}
+            </nav>
+
+            <form action={signOut}>
               <button
-                type="button"
-                aria-label="Close menu"
-                onClick={() => setOpen(false)}
+                type="submit"
                 style={{
-                  alignSelf: 'flex-end',
                   background: 'transparent',
-                  border: 'none',
-                  color: 'var(--cream)',
-                  fontSize: '1.5rem',
+                  border: '1px solid rgba(201,160,50,0.2)',
+                  borderRadius: 8,
+                  color: 'var(--cream-dim)',
+                  fontSize: '0.8rem',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '0.6rem 1.2rem',
                   cursor: 'pointer',
+                  alignSelf: 'flex-start',
                 }}
               >
-                ✕
+                Sign out
               </button>
-            </div>
+            </form>
           </div>
         </>
       )}
