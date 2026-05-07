@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('gwm-theme')||'botanical';document.documentElement.setAttribute('data-theme',t);}catch(e){}})()`,
+            __html: `(function(){try{var v=['botanical','blossom','midnight','light'];var t=localStorage.getItem('gwm-theme');document.documentElement.setAttribute('data-theme',v.indexOf(t)>-1?t:'botanical');}catch(e){}})()`,
           }}
         />
       </head>

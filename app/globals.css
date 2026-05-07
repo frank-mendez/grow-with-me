@@ -8,6 +8,7 @@
 
 :root,
 [data-theme="botanical"] {
+  color-scheme: dark;
   /* Semantic tokens */
   --bg:             #0F2A1D;
   --card:           #183826;
@@ -35,6 +36,7 @@
 }
 
 [data-theme="blossom"] {
+  color-scheme: dark;
   /* Semantic tokens */
   --bg:             #2D1B25;
   --card:           #3D2535;
@@ -62,6 +64,7 @@
 }
 
 [data-theme="midnight"] {
+  color-scheme: dark;
   /* Semantic tokens */
   --bg:             #0D1B30;
   --card:           #152440;
@@ -89,6 +92,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   /* Semantic tokens */
   --bg:             #F8F4EE;
   --card:           #FFFFFF;

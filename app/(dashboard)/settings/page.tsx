@@ -49,7 +49,6 @@ export default async function SettingsPage() {
                   background: 'var(--card-alt)',
                   border: '1px solid var(--card-border)',
                   color: 'var(--text)',
-                  colorScheme: 'dark',
                 }}
               />
             </label>
