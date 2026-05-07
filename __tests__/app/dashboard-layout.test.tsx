@@ -54,15 +54,16 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Grow With Me')).toBeInTheDocument()
   })
 
-  it('renders "soon" labels for unavailable nav items', async () => {
+  it('renders Mood as a nav link (not a soon placeholder)', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
 
     const { default: DashboardLayout } = await import('@/app/(dashboard)/layout')
     const jsx = await DashboardLayout({ children: <div /> })
     render(jsx)
 
-    const soonLabels = screen.getAllByText('soon')
-    expect(soonLabels.length).toBeGreaterThan(0)
+    expect(screen.queryByText('soon')).toBeNull()
+    const moodLink = screen.getByRole('link', { name: /mood/i })
+    expect(moodLink).toHaveAttribute('href', '/mood')
   })
 
   it('redirects to /login when user is not authenticated', async () => {

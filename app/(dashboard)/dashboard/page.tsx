@@ -9,8 +9,8 @@ import { getCurrentWeek } from '@/lib/pregnancy'
 const FEATURES = [
   { href: '/timeline', label: 'Timeline', description: 'Week-by-week development', ready: true },
   { href: '/kicks', label: 'Kick Tracker', description: "Log your baby's kicks", ready: true },
-  { href: '#', label: 'Mood Garden', description: 'Tend to your daily mood', ready: false },
-  { href: '#', label: 'Talk to Baby', description: 'Record a voice message', ready: false },
+  { href: '/mood', label: 'Mood Garden', description: 'Tend to your daily mood', ready: true },
+  { href: '/talk-to-baby', label: 'Talk to Baby', description: 'Record a voice message', ready: true },
 ]
 
 export default async function DashboardPage() {

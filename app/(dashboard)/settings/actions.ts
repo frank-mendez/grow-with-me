@@ -11,6 +11,12 @@ function isValidDate(dateStr: string): boolean {
   return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day
 }
 
+export async function signOut() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/login')
+}
+
 export async function saveDueDate(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

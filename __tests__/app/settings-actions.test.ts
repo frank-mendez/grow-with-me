@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockGetUser, mockUpdate, mockEq, mockFrom, mockRedirect, mockRevalidatePath } = vi.hoisted(() => {
+const { mockGetUser, mockSignOut, mockUpdate, mockEq, mockFrom, mockRedirect, mockRevalidatePath } = vi.hoisted(() => {
   const mockEq = vi.fn(() => Promise.resolve({ error: null }))
   const mockUpdate = vi.fn(() => ({ eq: mockEq }))
   const mockFrom = vi.fn(() => ({ update: mockUpdate }))
   return {
     mockGetUser: vi.fn(),
+    mockSignOut: vi.fn().mockResolvedValue({}),
     mockUpdate,
     mockEq,
     mockFrom,
@@ -16,7 +17,7 @@ const { mockGetUser, mockUpdate, mockEq, mockFrom, mockRedirect, mockRevalidateP
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() =>
-    Promise.resolve({ auth: { getUser: mockGetUser }, from: mockFrom })
+    Promise.resolve({ auth: { getUser: mockGetUser, signOut: mockSignOut }, from: mockFrom })
   ),
 }))
 
@@ -28,6 +29,20 @@ function makeFormData(fields: Record<string, string>) {
   Object.entries(fields).forEach(([k, v]) => fd.append(k, v))
   return fd
 }
+
+describe('signOut', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('calls supabase.auth.signOut and redirects to /login', async () => {
+    const { signOut } = await import('@/app/(dashboard)/settings/actions')
+    await expect(signOut()).rejects.toThrow('NEXT_REDIRECT')
+
+    expect(mockSignOut).toHaveBeenCalledOnce()
+    expect(mockRedirect).toHaveBeenCalledWith('/login')
+  })
+})
 
 describe('saveDueDate', () => {
   beforeEach(() => {
