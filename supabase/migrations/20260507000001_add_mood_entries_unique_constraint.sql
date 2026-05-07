@@ -1,11 +1,14 @@
--- Remove any duplicate (user_id, date) rows that accumulated before this constraint,
--- keeping the most recent row for each day (tie-break: latest id).
-DELETE FROM mood_entries AS m
-WHERE id <> (
-  SELECT id FROM mood_entries
-  WHERE user_id = m.user_id AND date = m.date
-  ORDER BY id DESC
-  LIMIT 1
+-- Remove any duplicate (user_id, date) rows before adding the unique constraint.
+-- Tie-break: highest id value (deterministic; id is UUID v4 so not insertion-order).
+-- Single-pass window function avoids the per-row re-scan of a correlated subquery.
+DELETE FROM mood_entries
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (PARTITION BY user_id, date ORDER BY id DESC) AS rn
+    FROM mood_entries
+  ) ranked
+  WHERE rn > 1
 );
 
 -- The initial schema already created a non-unique index on (user_id, date).

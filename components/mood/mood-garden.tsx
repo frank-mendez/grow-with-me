@@ -109,6 +109,9 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
   const [isSaving, setIsSaving]   = useState(false)
   // Tracks the saved row ID only for the first entry of the day, to trigger the bloom animation.
   const [newEntryId, setNewEntryId] = useState<string | null>(null)
+  // Anchors all date arithmetic to the day the data was loaded, so display
+  // stays consistent if the panel remains open past midnight.
+  const [loadDate, setLoadDate] = useState(() => isoDate())
   const isSavingRef = useRef(false)
   const mountedRef  = useRef(true)
 
@@ -122,6 +125,7 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
 
     async function load() {
       const today = isoDate()
+      setLoadDate(today)
       const { data, error } = await supabase
         .from('mood_entries')
         .select('*')
@@ -160,14 +164,23 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
     if (isSavingRef.current) return
     isSavingRef.current = true
 
-    const wasFirstEntry = todayMood === null
-    const previousMood  = todayMood
+    const today = isoDate()
+    const dayChanged = today !== loadDate
+    if (dayChanged) {
+      // Calendar day rolled over while the panel was open — reset display state
+      // so the write goes to the new date and the garden reflects a fresh start.
+      setLoadDate(today)
+      setTodayMood(null)
+      setHistory([])
+      setNewEntryId(null)
+    }
+
+    const wasFirstEntry = dayChanged || todayMood === null
+    const previousMood  = dayChanged ? null : todayMood
 
     setNewEntryId(null)    // reset so re-selecting doesn't re-trigger the bloom animation
     setTodayMood(mood)     // optimistic
     setIsSaving(true)
-
-    const today = isoDate()
     const { data, error } = await supabase
       .from('mood_entries')
       .upsert(
@@ -227,7 +240,7 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
   const hasAnyHistory = history.some(Boolean)
 
   const todayEntry: MoodEntry | null = todayMood !== null
-    ? { id: newEntryId ?? 'today-optimistic', user_id: userId, date: isoDate(), mood: todayMood }
+    ? { id: newEntryId ?? 'today-optimistic', user_id: userId, date: loadDate, mood: todayMood }
     : null
 
   return (
