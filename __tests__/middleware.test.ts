@@ -83,4 +83,29 @@ describe('middleware — redirect logic', () => {
     expect(mockRedirectFn).not.toHaveBeenCalled()
     expect(result).toBe(mockResponse)
   })
+
+  it('redirects unauthenticated user from /kicks to /login', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    await middleware(makeRequest('/kicks'))
+    expect(mockRedirectFn).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/login' })
+    )
+  })
+
+  it('redirects unauthenticated user from /settings to /login', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null } })
+    await middleware(makeRequest('/settings'))
+    expect(mockRedirectFn).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/login' })
+    )
+  })
+
+  it('redirects authenticated user from / to /dashboard', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
+    const result = await middleware(makeRequest('/'))
+    expect(mockRedirectFn).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/dashboard' })
+    )
+    expect(result).toBe(mockRedirectResponse)
+  })
 })

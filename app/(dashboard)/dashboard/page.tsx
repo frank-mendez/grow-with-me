@@ -8,7 +8,7 @@ import { getCurrentWeek } from '@/lib/pregnancy'
 
 const FEATURES = [
   { href: '/timeline', label: 'Timeline', description: 'Week-by-week development', ready: true },
-  { href: '#', label: 'Kick Tracker', description: "Log your baby's kicks", ready: false },
+  { href: '/kicks', label: 'Kick Tracker', description: "Log your baby's kicks", ready: true },
   { href: '#', label: 'Mood Garden', description: 'Tend to your daily mood', ready: false },
   { href: '#', label: 'Talk to Baby', description: 'Record a voice message', ready: false },
 ]
@@ -49,7 +49,9 @@ export default async function DashboardPage() {
           {currentWeek ?? '—'}
         </p>
         <p className="text-xs mt-3" style={{ color: 'var(--cream-dim)' }}>
-          {currentWeek ? 'of 40' : 'Set your due date to track your week'}
+          {currentWeek
+            ? 'of 40'
+            : <Link href="/settings" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Set your due date</Link>}
         </p>
       </div>
 
