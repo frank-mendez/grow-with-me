@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import type { PregnancyWeek } from '@/types/database'
 import { TalkToBaby } from './TalkToBaby'
 import { KickPlay } from './KickPlay'
+import { MoodGarden } from '@/components/mood/mood-garden'
 
 const BabyVisual = dynamic(
   () => import('./BabyVisual').then((m) => ({ default: m.BabyVisual })),
@@ -320,67 +321,16 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
             </div>
           )}
 
-          {/* Just for you card */}
-          {week.just_for_you && (
-            <div
-              style={{
-                padding: '1rem 1.25rem',
-                background: 'rgba(14,32,22,0.75)',
-                border: '1px solid rgba(201,160,50,0.14)',
-                borderRadius: 14,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-              }}
-            >
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'rgba(201,160,50,0.12)',
-                  border: '1px solid rgba(201,160,50,0.22)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ fontSize: '14px', color: 'var(--gold)' }}>❤</span>
-              </div>
-
-              <div className="flex-1" style={{ minWidth: 0 }}>
-                <p
-                  style={{
-                    fontSize: '10px',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: 'var(--gold)',
-                    marginBottom: 5,
-                  }}
-                >
-                  Just for you
-                </p>
-                <p style={{ fontSize: '13px', color: 'var(--cream-dim)', lineHeight: 1.65 }}>
-                  {week.just_for_you}
-                </p>
-              </div>
-
-              <span aria-hidden="true" style={{ fontSize: '36px', flexShrink: 0, opacity: 0.7, alignSelf: 'center' }}>
-                ☕
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Kick Play + Talk to Baby sections */}
+      {/* User-gated features: Kick Play → Talk to Baby → Mood Garden */}
       {userId && (
         <div
           style={{
             position: 'relative',
             zIndex: 1,
-            padding: '0 16px 24px',
+            padding: '0 16px 0',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
@@ -388,6 +338,67 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
         >
           {isCurrent && <KickPlay userId={userId} />}
           <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
+          <MoodGarden userId={userId} />
+        </div>
+      )}
+
+      {/* Just for you — week content, shown regardless of auth state */}
+      {week.just_for_you && (
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            padding: '12px 16px 24px',
+          }}
+        >
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              background: 'rgba(14,32,22,0.75)',
+              border: '1px solid rgba(201,160,50,0.14)',
+              borderRadius: 14,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: 'rgba(201,160,50,0.12)',
+                border: '1px solid rgba(201,160,50,0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: '14px', color: 'var(--gold)' }}>❤</span>
+            </div>
+
+            <div className="flex-1" style={{ minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--gold)',
+                  marginBottom: 5,
+                }}
+              >
+                Just for you
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--cream-dim)', lineHeight: 1.65 }}>
+                {week.just_for_you}
+              </p>
+            </div>
+
+            <span aria-hidden="true" style={{ fontSize: '36px', flexShrink: 0, opacity: 0.7, alignSelf: 'center' }}>
+              ☕
+            </span>
+          </div>
         </div>
       )}
     </motion.div>
