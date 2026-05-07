@@ -57,7 +57,7 @@ const NAV_ITEMS: Array<{
   { href: '/dashboard', label: 'Home', Icon: HomeIcon },
   { href: '/timeline', label: 'Timeline', Icon: TimelineIcon },
   { href: '/kicks', label: 'Kicks', Icon: KicksIcon },
-  { href: '#', label: 'Mood', Icon: MoodIcon, soon: true },
+  { href: '/mood', label: 'Mood', Icon: MoodIcon },
 ]
 
 export function BottomNav() {
