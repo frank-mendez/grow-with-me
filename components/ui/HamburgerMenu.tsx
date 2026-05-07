@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '/timeline', label: 'Timeline' },
   { href: '/kicks', label: 'Kick Tracker' },
   { href: '/mood', label: 'Mood Garden' },
+  { href: '/talk-to-baby', label: 'Talk to Baby' },
   { href: '/settings', label: 'Settings' },
 ]
 
