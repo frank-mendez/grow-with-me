@@ -17,13 +17,9 @@ export async function saveDueDate(formData: FormData) {
   if (!user) redirect('/login')
 
   const raw = formData.get('due_date')
-  if (typeof raw !== 'string' || !raw) {
-    throw new Error('Due date is required')
-  }
+  if (typeof raw !== 'string' || !raw) return
 
-  if (!isValidDate(raw)) {
-    throw new Error('Due date must be a valid date in YYYY-MM-DD format')
-  }
+  if (!isValidDate(raw)) return
 
   const { error } = await supabase
     .from('profiles')
