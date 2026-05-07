@@ -172,45 +172,53 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
     const today = isoDate()
     const dayChanged = today !== loadDate
     if (dayChanged) {
-      // Calendar day rolled over while the panel was open — reset display state
-      // so the write goes to the new date and the garden reflects a fresh start.
+      // Calendar day rolled over while the panel was open. Shift the existing
+      // history forward by one slot so previously loaded data is preserved:
+      // yesterday's today-mood moves into the last history slot, and each
+      // prior day slides one position earlier. Only the oldest day falls off.
+      const yesterdayEntry: MoodEntry | null =
+        todayMood !== null
+          ? { id: 'rolled-over', user_id: userId, date: loadDate, mood: todayMood }
+          : null
+      setHistory((prev) => [...prev.slice(1), yesterdayEntry])
       setLoadDate(today)
       setTodayMood(null)
-      setHistory(Array.from({ length: 6 }, () => null))
       setNewEntryId(null)
     }
 
     const wasFirstEntry = dayChanged || todayMood === null
     const previousMood  = dayChanged ? null : todayMood
 
-    setNewEntryId(null)    // reset so re-selecting doesn't re-trigger the bloom animation
-    setTodayMood(mood)     // optimistic
+    setNewEntryId(null)  // reset so re-selecting doesn't re-trigger the bloom animation
+    setTodayMood(mood)   // optimistic
     setIsSaving(true)
-    const { data, error } = await supabase
-      .from('mood_entries')
-      .upsert(
-        { user_id: userId, date: today, mood },
-        { onConflict: 'user_id,date' },
-      )
-      .select()
-      .single()
 
-    if (!mountedRef.current) return
+    try {
+      const { data, error } = await supabase
+        .from('mood_entries')
+        .upsert(
+          { user_id: userId, date: today, mood },
+          { onConflict: 'user_id,date' },
+        )
+        .select()
+        .single()
 
-    if (error) {
-      setTodayMood(previousMood)   // roll back optimistic update
+      if (!mountedRef.current) return
+
+      if (error) {
+        setTodayMood(previousMood)  // roll back optimistic update
+        return
+      }
+
+      // Only animate on the very first check-in of the day, not on mood changes.
+      if (wasFirstEntry && data) {
+        setNewEntryId((data as MoodEntry).id)
+      }
+    } finally {
+      // Always release the guard, even if the Supabase call throws unexpectedly.
       isSavingRef.current = false
-      setIsSaving(false)
-      return
+      if (mountedRef.current) setIsSaving(false)
     }
-
-    // Only animate on the very first check-in of the day, not on mood changes.
-    if (wasFirstEntry && data) {
-      setNewEntryId((data as MoodEntry).id)
-    }
-
-    isSavingRef.current = false
-    setIsSaving(false)
   }
 
   if (isLoading) {

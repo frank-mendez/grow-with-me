@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 // ── Supabase mock ─────────────────────────────────────────────────────────────
@@ -260,6 +260,74 @@ describe('MoodGarden', () => {
         expect.objectContaining({ mood: 'SAD' }),
         expect.anything(),
       )
+    })
+  })
+
+  describe('midnight rollover', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    async function loadedRenderAt(isoDateTime: string, userId = 'user-123') {
+      vi.setSystemTime(new Date(isoDateTime))
+      render(<MoodGarden userId={userId} />)
+      await act(async () => {})
+    }
+
+    it('upserts to the new date when a mood is selected after midnight', async () => {
+      await loadedRenderAt('2025-01-01T23:59:59.500')
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:00.400'))
+      fireEvent.click(screen.getByRole('button', { name: 'Happy' }))
+      // Flush the async upsert microtask (waitFor polls via setInterval which fake timers block)
+      await act(async () => {})
+
+      expect(mocks.upsert).toHaveBeenCalledTimes(1)
+      expect(mocks.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ date: '2025-01-02', mood: 'HAPPY' }),
+        expect.objectContaining({ onConflict: 'user_id,date' }),
+      )
+    })
+
+    it('preserves loaded history when day rolls over (does not wipe past data)', async () => {
+      setupChains({
+        queryResult: {
+          data: [
+            { id: 'm-hist', user_id: 'user-123', date: '2024-12-31', mood: 'NEUTRAL' },
+          ],
+          error: null,
+        },
+      })
+      await loadedRenderAt('2025-01-01T23:59:59.500')
+      // Garden should be showing with 🌿 for the loaded history entry
+      expect(screen.getByText('Your garden')).toBeInTheDocument()
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:00.400'))
+      fireEvent.click(screen.getByRole('button', { name: 'Sad' }))
+      await act(async () => {})
+
+      // Previously loaded NEUTRAL history (🌿) must still be visible after rollover
+      expect(screen.getByText('🌿')).toBeInTheDocument()
+      // Jan 2's SAD (🌧) is also rendered
+      expect(screen.getByText('🌧')).toBeInTheDocument()
+    })
+
+    it('shifts a previously selected today-mood into history on rollover', async () => {
+      await loadedRenderAt('2025-01-01T12:00:00.000')
+      fireEvent.click(screen.getByRole('button', { name: 'Happy' }))
+      await act(async () => {})
+
+      // Reset upsert mock for the second call
+      vi.clearAllMocks()
+      setupChains()
+
+      vi.setSystemTime(new Date('2025-01-02T00:00:01.000'))
+      fireEvent.click(screen.getByRole('button', { name: 'Sad' }))
+      await act(async () => {})
+
+      // Jan 1's HAPPY (🌸) should now appear in the history row
+      expect(screen.getByText('🌸')).toBeInTheDocument()
+      // Jan 2's SAD (🌧) is today's selection
+      expect(screen.getByText('🌧')).toBeInTheDocument()
     })
   })
 
