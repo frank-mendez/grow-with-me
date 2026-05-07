@@ -127,6 +127,10 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
       const today = isoDate()
       setLoadDate(today)
       setFetchFailed(false)
+      setIsLoading(true)
+      setTodayMood(null)
+      setHistory(Array.from({ length: 6 }, () => null))
+      setNewEntryId(null)
       const { data, error } = await supabase
         .from('mood_entries')
         .select('*')
