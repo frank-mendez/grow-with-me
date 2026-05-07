@@ -126,6 +126,7 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
     async function load() {
       const today = isoDate()
       setLoadDate(today)
+      setFetchFailed(false)
       const { data, error } = await supabase
         .from('mood_entries')
         .select('*')
@@ -171,7 +172,7 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
       // so the write goes to the new date and the garden reflects a fresh start.
       setLoadDate(today)
       setTodayMood(null)
-      setHistory([])
+      setHistory(Array.from({ length: 6 }, () => null))
       setNewEntryId(null)
     }
 
@@ -303,6 +304,7 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
               return (
                 <motion.button
                   key={value}
+                  type="button"
                   onClick={() => handleMoodSelect(value)}
                   whileTap={{ scale: 0.93 }}
                   disabled={isSaving}
@@ -408,14 +410,12 @@ export function MoodGarden({ userId }: Readonly<MoodGardenProps>) {
                     />
                   ))}
 
-                  {/* Today */}
-                  {todayEntry && (
-                    <PlantCell
-                      key={`today-${todayEntry.id}`}
-                      entry={todayEntry}
-                      isNew={newEntryId !== null}
-                    />
-                  )}
+                  {/* Today — always shown so the row is a stable 7-cell grid */}
+                  <PlantCell
+                    key={`today-${todayEntry?.id ?? 'placeholder'}`}
+                    entry={todayEntry}
+                    isNew={newEntryId !== null}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
