@@ -1,21 +1,124 @@
 @import "tailwindcss";
 
-:root {
-  --forest:    #0b1a14;
-  --forest-mid: #142b1f;
+/* ─────────────────────────────────────────────────────────────
+   THEMES  — each block defines 13 semantic tokens + legacy
+   aliases so existing var(--gold/--cream/--forest) code adapts
+   automatically without touching individual components.
+   ───────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme="botanical"] {
+  /* Semantic tokens */
+  --bg:             #0F2A1D;
+  --card:           #183826;
+  --card-alt:       rgba(20, 43, 31, 0.9);
+  --card-border:    rgba(231, 201, 139, 0.18);
+  --overlay-bg:     rgba(11, 26, 20, 0.97);
+  --accent:         #E7C98B;
+  --accent-dim:     rgba(231, 201, 139, 0.15);
+  --text:           #F5F5F5;
+  --text-dim:       rgba(245, 245, 245, 0.5);
+  --text-on-accent: #0F2A1D;
+  --font-heading:   var(--font-cormorant);
+  --font-body:      var(--font-inter);
+  --glow:           rgba(231, 201, 139, 0.15);
+
+  /* Legacy aliases */
+  --forest:       #0F2A1D;
+  --forest-mid:   #183826;
   --forest-light: #1e3d2c;
-  --gold:      #c9a032;
-  --gold-light: #e8c46a;
-  --blush:     #e8a898;
-  --cream:     #f5f0e8;
-  --cream-dim: #c8bfad;
-  --glow:      rgba(201, 160, 50, 0.15);
+  --gold:         #E7C98B;
+  --gold-light:   #F0D89E;
+  --blush:        rgba(232, 168, 152, 0.6);
+  --cream:        #F5F5F5;
+  --cream-dim:    rgba(245, 245, 245, 0.5);
+}
+
+[data-theme="blossom"] {
+  /* Semantic tokens */
+  --bg:             #2D1B25;
+  --card:           #3D2535;
+  --card-alt:       rgba(55, 28, 44, 0.9);
+  --card-border:    rgba(232, 180, 192, 0.18);
+  --overlay-bg:     rgba(28, 10, 20, 0.97);
+  --accent:         #E8B4C0;
+  --accent-dim:     rgba(232, 180, 192, 0.15);
+  --text:           #FFE8EE;
+  --text-dim:       rgba(255, 232, 238, 0.5);
+  --text-on-accent: #2D1B25;
+  --font-heading:   var(--font-playfair);
+  --font-body:      var(--font-nunito);
+  --glow:           rgba(232, 180, 192, 0.15);
+
+  /* Legacy aliases */
+  --forest:       #2D1B25;
+  --forest-mid:   #3D2535;
+  --forest-light: rgba(55, 28, 44, 0.8);
+  --gold:         #E8B4C0;
+  --gold-light:   #F0C8D4;
+  --blush:        rgba(232, 180, 192, 0.6);
+  --cream:        #FFE8EE;
+  --cream-dim:    rgba(255, 232, 238, 0.5);
+}
+
+[data-theme="midnight"] {
+  /* Semantic tokens */
+  --bg:             #0D1B30;
+  --card:           #152440;
+  --card-alt:       rgba(18, 32, 56, 0.9);
+  --card-border:    rgba(184, 168, 220, 0.18);
+  --overlay-bg:     rgba(8, 12, 24, 0.97);
+  --accent:         #B8A8DC;
+  --accent-dim:     rgba(184, 168, 220, 0.15);
+  --text:           #DCD8F0;
+  --text-dim:       rgba(220, 216, 240, 0.5);
+  --text-on-accent: #0D1B30;
+  --font-heading:   var(--font-lora);
+  --font-body:      var(--font-inter);
+  --glow:           rgba(184, 168, 220, 0.15);
+
+  /* Legacy aliases */
+  --forest:       #0D1B30;
+  --forest-mid:   #152440;
+  --forest-light: rgba(18, 32, 56, 0.8);
+  --gold:         #B8A8DC;
+  --gold-light:   #CCC0E8;
+  --blush:        rgba(184, 168, 220, 0.6);
+  --cream:        #DCD8F0;
+  --cream-dim:    rgba(220, 216, 240, 0.5);
+}
+
+[data-theme="light"] {
+  /* Semantic tokens */
+  --bg:             #F8F4EE;
+  --card:           #FFFFFF;
+  --card-alt:       #F0EBE2;
+  --card-border:    rgba(139, 115, 85, 0.14);
+  --overlay-bg:     rgba(248, 244, 238, 0.97);
+  --accent:         #8B7355;
+  --accent-dim:     rgba(139, 115, 85, 0.12);
+  --text:           #2A1F14;
+  --text-dim:       rgba(42, 31, 20, 0.5);
+  --text-on-accent: #FFFFFF;
+  --font-heading:   var(--font-dm-serif);
+  --font-body:      var(--font-manrope);
+  --glow:           rgba(139, 115, 85, 0.12);
+
+  /* Legacy aliases */
+  --forest:       #F8F4EE;
+  --forest-mid:   #FFFFFF;
+  --forest-light: #F0EBE2;
+  --gold:         #8B7355;
+  --gold-light:   #A08060;
+  --blush:        rgba(139, 115, 85, 0.4);
+  --cream:        #2A1F14;
+  --cream-dim:    rgba(42, 31, 20, 0.5);
 }
 
 body {
-  background: var(--forest);
-  color: var(--cream);
-  font-family: var(--font-dm-sans, sans-serif);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body, sans-serif);
   overflow-x: hidden;
 }
 
@@ -106,4 +209,15 @@ body {
   border-radius: 50%;
   pointer-events: none;
   animation: baby-particle ease-in-out infinite;
+}
+
+/* ── Theme transition ───────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  *, *::before, *::after {
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      color 0.25s ease,
+      box-shadow 0.35s ease;
+  }
 }
