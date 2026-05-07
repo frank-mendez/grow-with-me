@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import type { PregnancyWeek } from '@/types/database'
 import { TalkToBaby } from './TalkToBaby'
 import { KickPlay } from './KickPlay'
+import { MoodGarden } from '@/components/mood/mood-garden'
 
 const BabyVisual = dynamic(
   () => import('./BabyVisual').then((m) => ({ default: m.BabyVisual })),
@@ -320,7 +321,24 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
             </div>
           )}
 
-          {/* Just for you card */}
+        </div>
+      </div>
+
+      {/* Feature sections: Kick Play → Talk to Baby → Mood Garden → Just for you */}
+      {userId && (
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            padding: '0 16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {isCurrent && <KickPlay userId={userId} />}
+          <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
+          <MoodGarden userId={userId} />
           {week.just_for_you && (
             <div
               style={{
@@ -371,23 +389,6 @@ export function WeekDetailPanel({ week, isCurrent, userId }: Readonly<WeekDetail
               </span>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Kick Play + Talk to Baby sections */}
-      {userId && (
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            padding: '0 16px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}
-        >
-          {isCurrent && <KickPlay userId={userId} />}
-          <TalkToBaby weekId={week.id} weekNumber={week.week_number} userId={userId} />
         </div>
       )}
     </motion.div>

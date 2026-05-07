@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
+import { isoDate } from '@/lib/date'
 import type { KickLog } from '@/types/database'
 
 interface KickPlayProps {
@@ -19,14 +20,6 @@ function getProgressMessage(count: number): string {
   if (count <= 5) return 'Baby is waking up ✨'
   if (count <= 10) return 'Nice and active today 💪'
   return 'Lots of movement today!'
-}
-
-// Computes the local-time ISO date string for today or N days ago.
-// Called at write time so taps always go to the current day, even across midnight.
-function isoDate(daysAgo = 0): string {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function formatDay(iso: string): string {
