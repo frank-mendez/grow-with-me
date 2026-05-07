@@ -68,7 +68,7 @@ export function HamburgerMenu() {
               position: 'fixed',
               inset: 0,
               zIndex: 51,
-              background: 'rgba(11,26,20,0.97)',
+              background: 'var(--overlay-bg)',
               display: 'flex',
               flexDirection: 'column',
               padding: '1.5rem 2rem 2.5rem',
@@ -122,7 +122,7 @@ export function HamburgerMenu() {
                 type="submit"
                 style={{
                   background: 'transparent',
-                  border: '1px solid rgba(201,160,50,0.2)',
+                  border: '1px solid var(--card-border)',
                   borderRadius: 8,
                   color: 'var(--cream-dim)',
                   fontSize: '0.8rem',
