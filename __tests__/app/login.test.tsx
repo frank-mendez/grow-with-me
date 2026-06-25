@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import LoginPage from '@/app/(auth)/login/page'
 
@@ -13,6 +13,10 @@ vi.mock('@/lib/supabase/client', () => ({
 describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('renders the email input and submit button', () => {
@@ -65,6 +69,62 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Rate limit exceeded')).toBeInTheDocument()
+    })
+  })
+
+  it('uses NEXT_PUBLIC_SITE_URL as emailRedirectTo when set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://example.com')
+    mockSignInWithOtp.mockResolvedValue({ error: null })
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }))
+
+    await waitFor(() => {
+      expect(mockSignInWithOtp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            emailRedirectTo: 'https://example.com/auth/callback',
+          }),
+        })
+      )
+    })
+  })
+
+  it('strips trailing slash from NEXT_PUBLIC_SITE_URL in emailRedirectTo', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://example.com/')
+    mockSignInWithOtp.mockResolvedValue({ error: null })
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }))
+
+    await waitFor(() => {
+      expect(mockSignInWithOtp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            emailRedirectTo: 'https://example.com/auth/callback',
+          }),
+        })
+      )
+    })
+  })
+
+  it('falls back to location.origin for emailRedirectTo when NEXT_PUBLIC_SITE_URL is unset', async () => {
+    mockSignInWithOtp.mockResolvedValue({ error: null })
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }))
+
+    await waitFor(() => {
+      expect(mockSignInWithOtp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            emailRedirectTo: expect.stringMatching(/\/auth\/callback$/),
+          }),
+        })
+      )
     })
   })
 
