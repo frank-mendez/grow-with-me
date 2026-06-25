@@ -21,8 +21,12 @@ vi.mock('next/server', () => ({
 
 import { middleware } from '@/middleware'
 
-function makeRequest(pathname: string): NextRequest {
-  return { nextUrl: { pathname }, url: `http://localhost${pathname}` } as unknown as NextRequest
+function makeRequest(path: string): NextRequest {
+  const url = new URL(`http://localhost${path}`)
+  return {
+    nextUrl: { pathname: url.pathname, searchParams: url.searchParams },
+    url: url.toString(),
+  } as unknown as NextRequest
 }
 
 describe('middleware — redirect logic', () => {
@@ -106,6 +110,17 @@ describe('middleware — redirect logic', () => {
     expect(mockRedirectFn).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: '/dashboard' })
     )
+    expect(result).toBe(mockRedirectResponse)
+  })
+
+  it('forwards ?code at / to /auth/callback before any auth check', async () => {
+    const result = await middleware(makeRequest('/?code=test-code-123'))
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockRedirectFn).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/auth/callback' })
+    )
+    const redirectedUrl = (mockRedirectFn.mock.calls as unknown as URL[][])[0]?.[0]
+    expect(redirectedUrl?.searchParams.get('code')).toBe('test-code-123')
     expect(result).toBe(mockRedirectResponse)
   })
 })
