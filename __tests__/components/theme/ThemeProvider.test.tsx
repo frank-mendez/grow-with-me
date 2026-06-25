@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, act, fireEvent } from '@testing-library/react'
 import { ThemeProvider, useTheme } from '@/components/theme/ThemeProvider'
 
@@ -60,5 +60,22 @@ describe('ThemeProvider', () => {
       fireEvent.click(screen.getByText('switch'))
     })
     expect(localStorage.getItem('gwm-theme')).toBe('blossom')
+  })
+
+  it('setTheme still updates data-theme when localStorage throws', async () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
+    render(
+      <ThemeProvider>
+        <TestConsumer />
+      </ThemeProvider>
+    )
+    await act(async () => {
+      fireEvent.click(screen.getByText('switch'))
+    })
+    expect(document.documentElement.getAttribute('data-theme')).toBe('blossom')
+    expect(screen.getByTestId('theme').textContent).toBe('blossom')
+    spy.mockRestore()
   })
 })
