@@ -28,13 +28,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div
       className="flex flex-col"
-      style={{ minHeight: '100dvh', background: 'var(--forest)' }}
+      style={{ minHeight: '100dvh', background: 'var(--bg)' }}
     >
       {/* Top header */}
       <header
         style={{
-          background: 'var(--forest-mid)',
-          borderBottom: '1px solid rgba(201,160,50,0.12)',
+          background: 'var(--card)',
+          borderBottom: '1px solid var(--card-border)',
         }}
       >
         <div
