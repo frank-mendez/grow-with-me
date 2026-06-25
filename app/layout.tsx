@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import {
   Cormorant_Garamond,
   DM_Sans,
@@ -84,6 +85,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID &&
+          (process.env.VERCEL_ENV === 'production' ||
+            (!process.env.VERCEL_ENV && process.env.NODE_ENV === 'production')) && (
+            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+          )}
       </body>
     </html>
   )
