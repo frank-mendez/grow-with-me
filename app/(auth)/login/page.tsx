@@ -17,10 +17,11 @@ export default function LoginPage() {
     setError(null)
 
     const supabase = createClient()
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? globalThis.location.origin
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     })
 
