@@ -6,14 +6,23 @@ const AUTH_PATHS = ['/login']
 const HOME_PATH = '/'
 
 export async function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl
+
+  // Supabase sometimes redirects to site_url (/) instead of /auth/callback when the
+  // redirect URL isn't in the project allowlist. Forward the code so the handler can run.
+  const code = searchParams.get('code')
+  if (pathname === HOME_PATH && code) {
+    const callbackUrl = new URL('/auth/callback', request.url)
+    callbackUrl.searchParams.set('code', code)
+    return NextResponse.redirect(callbackUrl)
+  }
+
   const { supabase, response } = createClient(request)
 
   // Always use getUser() — getSession() is unsafe for server-side auth checks
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
 
   if (PROTECTED_PATHS.some((p) => pathname.startsWith(p)) && !user) {
     const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
