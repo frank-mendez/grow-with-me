@@ -34,19 +34,21 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=
 
 ### 3. Root layout (`app/layout.tsx`)
 
-Import `GoogleAnalytics` from `@next/third-parties/google` and render it inside `<html>` only when `NODE_ENV === 'production'`:
+Import `GoogleAnalytics` from `@next/third-parties/google` and render it inside `<html>` only in true production. Vercel sets `NODE_ENV=production` on preview deployments too, so use `VERCEL_ENV` as the primary discriminator when running on Vercel:
 
 ```tsx
 import { GoogleAnalytics } from '@next/third-parties/google'
 
 // inside RootLayout return, before </html>:
-{process.env.NODE_ENV === 'production' && (
-  <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!} />
-)}
+{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID &&
+  (process.env.VERCEL_ENV === 'production' ||
+    (!process.env.VERCEL_ENV && process.env.NODE_ENV === 'production')) && (
+    <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+  )}
 ```
 
 ## Constraints
 
-- GA never fires on `localhost` or Vercel preview deployments (guarded by `NODE_ENV === 'production'`).
+- GA never fires on `localhost` or Vercel preview deployments. On Vercel, `VERCEL_ENV === 'production'` is the guard (Vercel sets `NODE_ENV=production` on previews too). Outside Vercel, `NODE_ENV === 'production'` is the fallback.
 - No custom event tracking in scope — GA4 auto-collects pageviews on SPA navigation.
 - No additional abstraction layer needed.

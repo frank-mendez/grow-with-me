@@ -41,4 +41,12 @@ describe('RootLayout', () => {
     expect(html).toContain('data-testid="google-analytics"')
     expect(html).toContain('G-WV5Q3KHX1S')
   })
+
+  it('does not render GoogleAnalytics on Vercel preview deployments', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('NEXT_PUBLIC_GA_MEASUREMENT_ID', 'G-WV5Q3KHX1S')
+    const html = renderToString(<RootLayout><div>child</div></RootLayout>)
+    expect(html).not.toContain('data-testid="google-analytics"')
+  })
 })
